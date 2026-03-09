@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Listado de Documentos 3</title>
+<title>Listado de Documentos 4</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -219,13 +219,6 @@ async function decryptTxt(arrayBuffer, pwd) {
     }
   }
 
-  if (!decrypted) throw new Error('Contraseña incorrecta o archivo dañado');
-
-  const bytes  = new Uint8Array(decrypted);
-  const padLen = bytes[bytes.length - 1];
-  if (padLen < 1 || padLen > 16) throw new Error('Padding inválido');
-  return new TextDecoder('utf-8').decode(bytes.slice(0, bytes.length - padLen));
-}
   if (!decrypted) throw new Error('Contraseña incorrecta o archivo dañado');
 
   const bytes  = new Uint8Array(decrypted);
