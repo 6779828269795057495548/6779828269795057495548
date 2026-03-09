@@ -1,41 +1,57 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-<meta charset="UTF-8">
-<title>Descifrador de Facturas</title>
+<meta charset="UTF-8" />
+<title>Descifrador de Facturas Debug</title>
 <style>
-  body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
-  input, button { padding: 8px; margin: 5px 0; width: 100%; }
-  iframe { width: 100%; height: 80vh; border: 1px solid #ccc; margin-top: 10px; }
+  body { font-family: monospace; padding: 20px; background: #f9f9f9; }
+  input, button { padding: 8px; margin: 5px 0; width: 100%; max-width: 600px; }
+  pre { background: #eee; padding: 10px; max-width: 600px; overflow-x: auto; }
 </style>
 </head>
 <body>
-<h2>Descifrador de Facturas</h2>
+<h2>Descifrador de Facturas con Debug</h2>
 
 <label>URL del TXT cifrado en GitHub:</label>
-<input type="text" id="txtUrl" placeholder="https://.../factura.txt">
+<input type="text" id="txtUrl" placeholder="https://.../factura.txt" />
 
 <label>Contraseña:</label>
-<input type="password" id="password" placeholder="Contraseña de cifrado">
+<input type="password" id="password" placeholder="Contraseña de cifrado" />
 
 <button onclick="descifrar()">Descifrar y mostrar</button>
 
-<iframe id="visor"></iframe>
+<h3>Logs:</h3>
+<pre id="logs"></pre>
+
+<iframe id="visor" style="width:100%; height:70vh; border:1px solid #ccc; margin-top:10px;"></iframe>
 
 <script>
-// Función para quitar padding PKCS7 de forma segura
+function log(msg) {
+  const pre = document.getElementById("logs");
+  pre.textContent += msg + "\n";
+}
+
 function quitarPaddingPKCS7(data) {
     const padLen = data[data.length - 1];
-    if(padLen < 1 || padLen > 16) return data; // padding inválido, no lo quita
-    for(let i = data.length - padLen; i < data.length; i++) {
-        if(data[i] !== padLen) return data; // padding inválido, no lo quita
+    if(padLen < 1 || padLen > 16) {
+      log("Padding inválido: " + padLen);
+      return data;
     }
+    for(let i = data.length - padLen; i < data.length; i++) {
+        if(data[i] !== padLen) {
+          log("Padding inválido detectado en byte " + i);
+          return data;
+        }
+    }
+    log("Padding válido detectado, longitud: " + padLen);
     return data.slice(0, data.length - padLen);
 }
 
 async function descifrar() {
     const url = document.getElementById("txtUrl").value.trim();
     const password = document.getElementById("password").value;
+    const logs = document.getElementById("logs");
+    logs.textContent = "";
 
     if (!url || !password) {
         alert("Ingresa la URL del TXT y la contraseña.");
@@ -43,19 +59,23 @@ async function descifrar() {
     }
 
     try {
-        // Leer TXT desde GitHub
+        log("Fetch de archivo: " + url);
         const resp = await fetch(url);
         if (!resp.ok) throw new Error("No se pudo leer el archivo.");
         const base64 = await resp.text();
 
+        log("Base64 length: " + base64.length);
         const data = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+        log("Bytes total: " + data.length);
 
-        // Separar salt + iv + ciphertext
         const salt = data.slice(0,16);
         const iv = data.slice(16,32);
         const ciphertext = data.slice(32);
 
-        // Derivar clave con PBKDF2
+        log("Salt: " + Array.from(salt).map(b => b.toString(16).padStart(2,"0")).join(" "));
+        log("IV: " + Array.from(iv).map(b => b.toString(16).padStart(2,"0")).join(" "));
+        log("Ciphertext length: " + ciphertext.length);
+
         const keyMaterial = await window.crypto.subtle.importKey(
             "raw",
             new TextEncoder().encode(password),
@@ -63,6 +83,7 @@ async function descifrar() {
             false,
             ["deriveKey"]
         );
+        log("Clave importada");
 
         const key = await window.crypto.subtle.deriveKey(
             {
@@ -76,26 +97,26 @@ async function descifrar() {
             false,
             ["decrypt"]
         );
+        log("Clave derivada");
 
-        // Descifrar AES-CBC
         const decryptedBuffer = await window.crypto.subtle.decrypt(
             {name: "AES-CBC", iv: iv},
             key,
             ciphertext
         );
+        log("Archivo descifrado, tamaño buffer: " + decryptedBuffer.byteLength);
 
-        // Quitar padding PKCS7
         const decryptedBytes = new Uint8Array(decryptedBuffer);
         const dataNoPad = quitarPaddingPKCS7(decryptedBytes);
 
-        // Convertir a texto
         const decoder = new TextDecoder();
         const html = decoder.decode(dataNoPad);
+        log("Texto descifrado listo");
 
-        // Mostrar en iframe
         document.getElementById("visor").srcdoc = html;
 
     } catch (e) {
+        log("Error: " + e.message);
         alert("Error al descifrar: " + e.message);
         console.error(e);
     }
@@ -103,4 +124,4 @@ async function descifrar() {
 </script>
 
 </body>
-</html>
+</html> 
