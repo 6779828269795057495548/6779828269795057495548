@@ -23,6 +23,16 @@
 <iframe id="visor"></iframe>
 
 <script>
+// Función para quitar padding PKCS7 de forma segura
+function quitarPaddingPKCS7(data) {
+    const padLen = data[data.length - 1];
+    if(padLen < 1 || padLen > 16) return data; // padding inválido, no lo quita
+    for(let i = data.length - padLen; i < data.length; i++) {
+        if(data[i] !== padLen) return data; // padding inválido, no lo quita
+    }
+    return data.slice(0, data.length - padLen);
+}
+
 async function descifrar() {
     const url = document.getElementById("txtUrl").value.trim();
     const password = document.getElementById("password").value;
@@ -49,7 +59,7 @@ async function descifrar() {
         const keyMaterial = await window.crypto.subtle.importKey(
             "raw",
             new TextEncoder().encode(password),
-            {name: "PBKDF2"},
+            "PBKDF2",
             false,
             ["deriveKey"]
         );
@@ -68,15 +78,19 @@ async function descifrar() {
         );
 
         // Descifrar AES-CBC
-        const decrypted = await window.crypto.subtle.decrypt(
+        const decryptedBuffer = await window.crypto.subtle.decrypt(
             {name: "AES-CBC", iv: iv},
             key,
             ciphertext
         );
 
+        // Quitar padding PKCS7
+        const decryptedBytes = new Uint8Array(decryptedBuffer);
+        const dataNoPad = quitarPaddingPKCS7(decryptedBytes);
+
         // Convertir a texto
         const decoder = new TextDecoder();
-        const html = decoder.decode(decrypted);
+        const html = decoder.decode(dataNoPad);
 
         // Mostrar en iframe
         document.getElementById("visor").srcdoc = html;
