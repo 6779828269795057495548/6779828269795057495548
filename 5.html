@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>Desencriptador Totalmente Offline</title>
+    <!-- Incluimos la librería directamente para evitar errores de conexión -->
+    <script src="https://cdnjs.cloudflare.com"></script>
+    <style>
+        body { font-family: sans-serif; background: #202124; color: #e8eaed; padding: 40px; }
+        .card { max-width: 800px; margin: auto; background: #292a2d; padding: 25px; border-radius: 10px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        h2 { color: #8ab4f8; border-bottom: 1px solid #3c4043; padding-bottom: 10px; }
+        textarea { width: 100%; height: 150px; background: #3c4043; color: #fff; border: 1px solid #5f6368; border-radius: 5px; padding: 10px; box-sizing: border-box; font-family: monospace; }
+        input { width: 100%; padding: 12px; margin: 15px 0; background: #3c4043; border: 1px solid #5f6368; color: #fff; border-radius: 5px; box-sizing: border-box; }
+        button { background: #8ab4f8; color: #202124; border: none; padding: 15px; width: 100%; border-radius: 5px; font-weight: bold; cursor: pointer; font-size: 16px; }
+        button:hover { background: #aecbfa; }
+        #viewer { margin-top: 20px; padding: 15px; background: #fff; color: #000; border-radius: 5px; min-height: 200px; overflow: auto; }
+        .status { color: #f28b82; font-weight: bold; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <h2>🔓 Decodificador de Archivos .txt</h2>
+    <div id="status" class="status"></div>
+    
+    <label>1. Contraseña:</label>
+    <input type="password" id="pass" value="c12982613">
+    
+    <label>2. Pega aquí el contenido del archivo .txt:</label>
+    <textarea id="data" placeholder="Pega el código largo en Base64 aquí..."></textarea>
+    
+    <button onclick="procesar()">DESENCRIPTAR Y MOSTRAR</button>
+    
+    <h3>3. Resultado Visual:</h3>
+    <div id="viewer">El HTML se renderizará aquí.</div>
+</div>
+
+<script>
+// Si el CDN falla, este pequeño truco intenta cargarlo de nuevo o avisar
+if (typeof CryptoJS === 'undefined') {
+    document.getElementById('status').style.display = 'block';
+    document.getElementById('status').innerText = "⚠️ ERROR: El navegador bloqueó la librería. Intenta abrir este archivo con otro navegador (como Firefox) o presiona F5.";
+}
+
+function procesar() {
+    const password = document.getElementById('pass').value;
+    const encryptedBase64 = document.getElementById('data').value.trim();
+    const viewer = document.getElementById('viewer');
+
+    try {
+        // Decodificar Base64
+        const rawData = CryptoJS.enc.Base64.parse(encryptedBase64);
+        
+        // Extraer Salt (16 bytes), IV (16 bytes) y Ciphertext
+        const salt = CryptoJS.lib.WordArray.create(rawData.words.slice(0, 4));
+        const iv = CryptoJS.lib.WordArray.create(rawData.words.slice(4, 8));
+        const ciphertext = CryptoJS.lib.WordArray.create(rawData.words.slice(8));
+
+        // Derivar clave (PBKDF2)
+        const key = CryptoJS.PBKDF2(password, salt, {
+            keySize: 256/32,
+            iterations: 100000,
+            hasher: CryptoJS.algo.SHA1
+        });
+
+        // Desencriptar AES-256-CBC
+        const decrypted = CryptoJS.AES.decrypt(
+            { ciphertext: ciphertext },
+            key,
+            { iv: iv, mode: CryptoJS.mode.CBC, padding: CryptoJS.pad.Pkcs7 }
+        );
+
+        const html = decrypted.toString(CryptoJS.enc.Utf8);
+
+        if (!html) throw new Error("Contraseña incorrecta");
+
+        viewer.innerHTML = html;
+        document.getElementById('status').style.display = 'none';
+
+    } catch (e) {
+        alert("Error: " + e.message);
+    }
+}
+</script>
+
+</body>
+</html>
