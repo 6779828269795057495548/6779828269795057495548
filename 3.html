@@ -36,7 +36,7 @@ async function descifrar() {
         // Leer TXT desde GitHub
         const resp = await fetch(url);
         if (!resp.ok) throw new Error("No se pudo leer el archivo.");
-        const base64 = await resp.text();
+        const base64 = (await resp.text()).replace(/\s/g, "");
 
         const data = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
 
@@ -93,4 +93,5 @@ async function descifrar() {
 }
 </script>
 </body>
+
 </html>
