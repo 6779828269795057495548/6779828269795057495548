@@ -1,0 +1,139 @@
+* {
+  box-sizing: border-box;
+  font-family: "Segoe UI", Roboto, Arial, sans-serif;
+}
+
+body {
+  background: #f4f6f9;
+  margin: 0;
+  padding: 30px;
+}
+
+.container {
+  max-width: 1400px;
+  margin: auto;
+  background: white;
+  padding: 25px 30px;
+  border-radius: 10px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.08);
+}
+
+/* === NUEVO ESTILO IC CORP === */
+.brand-header {
+  display: block;
+  text-align: center;
+  font-size: 42px;       /* Tamaño grande */
+  font-weight: 900;      /* Extra negrita */
+  color: #2c3e50;        /* Color corporativo */
+  letter-spacing: 4px;   /* Espaciado elegante */
+  margin: 10px 0 5px 0;
+  text-transform: uppercase;
+}
+
+
+/* ESTILO ESPECÍFICO PARA IC CORP */
+.login-box h1.brand {
+  font-size: 40px;       /* Mucho más grande */
+  font-weight: 900;      /* Más grueso */
+  letter-spacing: 3px;   /* Espaciado entre letras */
+  color: #2c3e50;        /* Color corporativo oscuro */
+  margin-bottom: 10px;   /* Espacio extra abajo */
+}
+
+h2 {
+  margin-top: 0;
+  text-align: center;    /* Centrado para balancear */
+  color: #7f8c8d;        /* Color más suave para el subtítulo */
+  font-size: 18px;
+  font-weight: 400;
+  margin-bottom: 30px;
+}
+
+.upload {
+  margin: 20px 0;
+}
+
+/* === TABLAS === */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 15px;
+  font-size: 14px;
+  table-layout: fixed;
+}
+
+thead {
+  background: #2c3e50;
+  color: white;
+}
+
+th, td {
+  padding: 6px 10px;    /* Un poco más de aire */
+  text-align: left;
+  white-space: nowrap;
+}
+
+tbody tr:nth-child(even) {
+  background: #f5f5f5;
+}
+
+tbody tr:hover {
+  background: #d0e3ff;
+}
+
+.money {
+  text-align: right;
+}
+
+/* === ESTADOS / BADGES === */
+.badge {
+  padding: 5px 8px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+.ok {
+  background: #e6f4ea;
+  color: #1e7e34;
+}
+
+.missing {
+  background: #fdecea;
+  color: #c62828;
+}
+
+/* === ALINEACIONES ESPECÍFICAS === */
+/* Centrar columna Folio */
+table th:nth-child(6),
+table td:nth-child(6) {
+  text-align: center;
+}
+
+/* Centrar columna TipoDoc */
+table th:nth-child(2),
+table td:nth-child(2) {
+  text-align: center;
+}
+
+.processed-row a {
+  color: #888;
+}
+
+.processed-row {
+  background-color: #f1f5f9;  /* gris suave */
+  color: #6b7280;
+}
+
+.processed-row .ok {
+  background: #e5e7eb;   /* gris */
+  color: #6b7280;
+}
+
+th:nth-child(3), td:nth-child(3){
+  width:40px;
+  text-align:center;
+}
+
+th:nth-child(4), td:nth-child(4){
+  width:80px;
+}
