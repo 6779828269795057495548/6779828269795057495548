@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<title>Listado de Documentos 2</title>
+<title>Listado de Documentos 3</title>
 <link rel="stylesheet" href="style.css">
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
 <script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
@@ -183,14 +183,21 @@ function parseCSV(text) {
 // ─── DESCIFRADO AES-256-CBC + PBKDF2 ─────────────────────────────────────────
 async function decryptTxt(arrayBuffer, pwd) {
   const rawText = new TextDecoder('utf-8').decode(arrayBuffer);
-  const b64     = rawText.replace(/^\uFEFF/, '').replace(/[^A-Za-z0-9+/=]/g, '');
-  const raw     = b64ToBytes(b64);
+  const b64 = rawText.replace(/^\uFEFF/, '').replace(/[^A-Za-z0-9+/=]/g, '');
+  const raw = b64ToBytes(b64);
+
+  console.log('b64 length:', b64.length);
+  console.log('raw bytes:', raw.length);
+  console.log('pwd:', pwd);
 
   if (raw.length < 48) throw new Error(`Archivo demasiado corto (${raw.length} bytes)`);
 
   const salt       = raw.slice(0, 16);
   const iv         = raw.slice(16, 32);
   const ciphertext = raw.slice(32);
+
+  console.log('salt b64:', btoa(String.fromCharCode(...salt)));
+  console.log('iv b64:', btoa(String.fromCharCode(...iv)));
 
   const pwdKey = await crypto.subtle.importKey(
     'raw', new TextEncoder().encode(pwd), 'PBKDF2', false, ['deriveKey']
@@ -205,10 +212,20 @@ async function decryptTxt(arrayBuffer, pwd) {
         { name: 'AES-CBC', length: 256 }, false, ['decrypt']
       );
       decrypted = await crypto.subtle.decrypt({ name: 'AES-CBC', iv }, key, ciphertext);
+      console.log('Descifrado OK con hash:', hash);
       break;
-    } catch (_) {}
+    } catch (e) {
+      console.log('Falló con hash', hash, ':', e.message);
+    }
   }
 
+  if (!decrypted) throw new Error('Contraseña incorrecta o archivo dañado');
+
+  const bytes  = new Uint8Array(decrypted);
+  const padLen = bytes[bytes.length - 1];
+  if (padLen < 1 || padLen > 16) throw new Error('Padding inválido');
+  return new TextDecoder('utf-8').decode(bytes.slice(0, bytes.length - padLen));
+}
   if (!decrypted) throw new Error('Contraseña incorrecta o archivo dañado');
 
   const bytes  = new Uint8Array(decrypted);
