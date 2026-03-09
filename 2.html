@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Descifrador de Facturas</title>
+<style>
+  body { font-family: sans-serif; padding: 20px; background: #f0f0f0; }
+  input, button { padding: 8px; margin: 5px 0; width: 100%; }
+  iframe { width: 100%; height: 80vh; border: 1px solid #ccc; margin-top: 10px; }
+</style>
+</head>
+<body>
+<h2>Descifrador de Facturas</h2>
+
+<label>URL del TXT cifrado en GitHub:</label>
+<input type="text" id="txtUrl" placeholder="https://.../factura.txt">
+
+<label>Contraseña:</label>
+<input type="password" id="password" placeholder="Contraseña de cifrado">
+
+<button onclick="descifrar()">Descifrar y mostrar</button>
+
+<iframe id="visor"></iframe>
+
+<script>
+async function descifrar() {
+    const url = document.getElementById("txtUrl").value.trim();
+    const password = document.getElementById("password").value;
+
+    if (!url || !password) {
+        alert("Ingresa la URL del TXT y la contraseña.");
+        return;
+    }
+
+    try {
+        // Leer TXT desde GitHub
+        const resp = await fetch(url);
+        if (!resp.ok) throw new Error("No se pudo leer el archivo.");
+        const base64 = await resp.text();
+
+        const data = Uint8Array.from(atob(base64), c => c.charCodeAt(0));
+
+        // Separar salt + iv + ciphertext
+        const salt = data.slice(0,16);
+        const iv = data.slice(16,32);
+        const ciphertext = data.slice(32);
+
+        // Derivar clave con PBKDF2
+        const keyMaterial = await window.crypto.subtle.importKey(
+            "raw",
+            new TextEncoder().encode(password),
+            {name: "PBKDF2"},
+            false,
+            ["deriveKey"]
+        );
+
+        const key = await window.crypto.subtle.deriveKey(
+            {
+                name: "PBKDF2",
+                salt: salt,
+                iterations: 100000,
+                hash: "SHA-256"
+            },
+            keyMaterial,
+            { name: "AES-CBC", length: 256 },
+            false,
+            ["decrypt"]
+        );
+
+        // Descifrar AES-CBC
+        const decrypted = await window.crypto.subtle.decrypt(
+            {name: "AES-CBC", iv: iv},
+            key,
+            ciphertext
+        );
+
+        // Convertir a texto
+        const decoder = new TextDecoder();
+        const html = decoder.decode(decrypted);
+
+        // Mostrar en iframe
+        document.getElementById("visor").srcdoc = html;
+
+    } catch (e) {
+        alert("Error al descifrar: " + e.message);
+        console.error(e);
+    }
+}
+</script>
+
+</body>
+</html>
