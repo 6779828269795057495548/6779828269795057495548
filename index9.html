@@ -252,7 +252,7 @@ async function loadFacturaEnIframe(clave) {
   docFrame.src = '';
 
   try {
-    const txtUrl  = BASE_URL + 'mox_' + clave + '.txt';
+    const txtUrl  = BASE_URL + clave + '.txt';
     const resp    = await fetch(txtUrl, { cache: 'no-store' });
     if (!resp.ok) throw new Error(`No se encontró el archivo (HTTP ${resp.status})`);
     const buf     = await resp.arrayBuffer();
