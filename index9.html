@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Listado de Documentos</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<style>
+/* Modal clave */
+#modalOverlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999;
+}
+#modalBox {
+  background:#fff;
+  padding:32px 36px;
+  border-radius:10px;
+  box-shadow:0 12px 25px rgba(0,0,0,.2);
+  width:100%; max-width:360px;
+  text-align:center;
+}
+#modalBox h3 { margin:0 0 8px; font-size:18px; color:#1f2937; }
+#modalBox p  { margin:0 0 18px; font-size:13px; color:#6b7280; }
+#modalBox input {
+  width:100%; padding:10px 12px;
+  border:1px solid #d1d5db; border-radius:6px;
+  font-size:14px; margin-bottom:12px;
+}
+#modalBox input:focus { outline:none; border-color:#6b7280; }
+#modalBox button {
+  width:100%; padding:11px;
+  background:#374151; color:#fff;
+  border:none; border-radius:6px;
+  font-size:14px; cursor:pointer;
+}
+#modalBox button:hover { background:#1f2937; }
+#modalError { display:none; color:#991b1b; font-size:12px; margin-bottom:10px; }
+#loadingMsg { text-align:center; padding:20px; color:#6b7280; font-size:14px; }
+</style>
+</head>
+<body>
+
+<!-- MODAL CLAVE -->
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3>Clave de acceso</h3>
+    <p>Ingresa la clave para descifrar los documentos</p>
+    <div id="modalError">Clave requerida</div>
+    <input type="password" id="claveInput" placeholder="Contraseña"
+           onkeydown="if(event.key==='Enter') submitClave()">
+    <button onclick="submitClave()">Continuar</button>
+  </div>
+</div>
+
+<div class="container">
+  <h2>Listado de Documentos Tributarios</h2>
+  <div id="loadingMsg" style="display:none">Cargando documentos...</div>
+  <div class="filters" id="filtros" style="display:none">
+    <input type="text" id="fTipo" placeholder="TipoDoc">
+    <input type="text" id="fRut" placeholder="RUT">
+    <input type="text" id="fRazon" placeholder="Razón Social">
+    <input type="text" id="fFolio" placeholder="Folio">
+    <label>Fecha:</label>
+    <input type="date" id="fFecha">
+    <select id="fPdf">
+      <option value="">HTML: Todos</option>
+      <option value="con">Con HTML</option>
+      <option value="sin">Sin HTML</option>
+    </select>
+    <button onclick="applyFilters()">Aplicar</button>
+    <button onclick="resetFilters()">Limpiar</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ok</th>
+        <th>Nro</th>
+        <th>Td</th>
+        <th>RUT</th>
+        <th>RazonSocial</th>
+        <th>Folio</th>
+        <th>Fecha</th>
+        <th class="money"><b>Exento</b></th>
+        <th class="money"><b>Neto</b></th>
+        <th class="money"><b>IVA</b></th>
+        <th class="money"><b>Total</b></th>
+        <th>Cuenta Contable</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div id="paginacion" style="margin-top:15px;text-align:center;"></div>
+</div>
+
+<!-- MODAL ERP -->
+<div id="accountModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-grid">
+      <div class="asiento-panel">
+        <div><b>ASIENTO CONTABLE</b></div>
+        <div><b>Proveedor:</b> <span id="mProveedor"></span></div>
+        <div><b>RUT:</b> <span id="mRut"></span></div>
+        <div><b>Folio:</b> <span id="mFolio"></span></div>
+        <div><b>Fecha:</b> <span id="mFecha"></span></div>
+        <br>
+        <label>Glosa</label>
+        <input type="text" id="mGlosa" style="width:100%">
+        <br><br>
+        <table class="asiento">
+          <thead>
+            <tr>
+              <th>Cuenta</th>
+              <th>Debe</th>
+              <th>Haber</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="asientoBody"></tbody>
+        </table>
+        <br>
+        <button onclick="addRow()">+ Agregar Cuenta</button>
+        <br><br>
+        <div style="text-align:right">
+          <b>Total Debe:</b> <span id="totalDebe"></span><br>
+          <b>Total Haber:</b> <span id="totalHaber"></span>
+        </div>
+        <br>
+        <button onclick="saveAccount()">Guardar</button>
+        <button onclick="closeModal()">Cerrar</button>
+        <button onclick="downloadCSV()">Descargar CSV</button>
+      </div>
+      <div class="resizer"></div>
+      <div class="factura">
+        <iframe id="docFrame"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<datalist id="cuentasDatalist"></datalist>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────
+const BASE_URL = "https://6779828269795057495548.github.io/6779828269795057495548/";
+const CSV_FILE = "Tmp.csv";
+const API_URL  = "https://api.github.com/repos/6779828269795057495548/6779828269795057495548/contents/";
+
+// ── CLAVE EN MEMORIA ─────────────────────────────────────────────
+let PASSWORD = "";
+
+function submitClave() {
+  const val = document.getElementById("claveInput").value.trim();
+  if (!val) { document.getElementById("modalError").style.display = "block"; return; }
+  PASSWORD = val;
+  document.getElementById("modalOverlay").style.display = "none";
+  initApp();
+}
+
+// ── DESCIFRADO AES-CBC + PBKDF2 ──────────────────────────────────
+async function decryptTxt(base64str, password) {
+  try {
+    const raw        = Uint8Array.from(atob(base64str.trim()), c => c.charCodeAt(0));
+    const salt       = raw.slice(0,  16);
+    const iv         = raw.slice(16, 32);
+    const ciphertext = raw.slice(32);
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
+    );
+    const aesKey = await crypto.subtle.deriveKey(
+      { name:"PBKDF2", salt, iterations:100000, hash:"SHA-1" },
+      keyMaterial, { name:"AES-CBC", length:256 }, false, ["decrypt"]
+    );
+    const plain = await crypto.subtle.decrypt({ name:"AES-CBC", iv }, aesKey, ciphertext);
+    return new TextDecoder("utf-8").decode(plain);
+  } catch(e) { return null; }
+}
+
+// ── ESTADO ───────────────────────────────────────────────────────
+const tbody      = document.getElementById("tbody");
+const paginacion = document.getElementById("paginacion");
+const PAGE_SIZE  = 10;
+let allRows      = [];
+let filteredRows = [];
+let txtFiles     = new Set(); // nombres base .txt disponibles en repo
+let htmlCache    = {};        // clave → objectURL descifrado
+let planCuentas  = [];
+let currentPage  = 1;
+let statusMap    = {};
+let accountMap   = {};
+let currentId    = null;
+
+// ── INIT: carga CSV + lista .txt desde GitHub ────────────────────
+async function initApp() {
+  const loadingMsg = document.getElementById("loadingMsg");
+  loadingMsg.style.display = "block";
+  loadingMsg.textContent   = "Cargando documentos...";
+  try {
+    // Listar .txt disponibles via GitHub API
+    const apiRes  = await fetch(API_URL);
+    const apiJson = await apiRes.json();
+    txtFiles = new Set(
+      apiJson
+        .filter(f => f.name.toLowerCase().endsWith(".txt"))
+        .map(f => f.name.replace(/\.txt$/i, "").trim())
+    );
+
+    // Cargar CSV de facturas
+    const csvRes  = await fetch(BASE_URL + CSV_FILE);
+    const csvText = await csvRes.text();
+    allRows       = parseCSV(csvText);
+    filteredRows  = [...allRows];
+    currentPage   = 1;
+
+    // Cargar plan de cuentas si existe
+    try {
+      const planRes  = await fetch(BASE_URL + "plan_cuentas.csv");
+      if (planRes.ok) {
+        const planText = await planRes.text();
+        const lines    = planText.split(/\r?\n/).filter(l => l.trim() !== "");
+        planCuentas    = lines.map(l => l.split(";")[0].trim());
+        actualizarDatalistCuentas();
+      }
+    } catch(e) { /* plan de cuentas opcional */ }
+
+    loadingMsg.style.display = "none";
+    document.getElementById("filtros").style.display = "flex";
+    renderTable();
+    renderPagination();
+
+    document.querySelectorAll(".filters input, .filters select")
+      .forEach(el => el.addEventListener("input", applyFilters));
+
+  } catch(err) {
+    loadingMsg.textContent = "Error al cargar: " + err.message;
+  }
+}
+
+// ── OBTENER URL DEL DOCUMENTO (descifra .txt → blob HTML) ────────
+async function getDocUrl(clave) {
+  if (htmlCache[clave]) return htmlCache[clave];
+  try {
+    const res  = await fetch(BASE_URL + clave + ".txt");
+    if (!res.ok) return null;
+    const b64  = await res.text();
+    const html = await decryptTxt(b64, PASSWORD);
+    if (!html) return null;
+    const url = URL.createObjectURL(new Blob([html], { type:"text/html;charset=utf-8" }));
+    htmlCache[clave] = url;
+    return url;
+  } catch(e) { return null; }
+}
+
+// ── PARSEO CSV ───────────────────────────────────────────────────
+function parseCSV(text) {
+  const lines   = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  const headers = lines[0].split(";").map(h => h.trim());
+  const data    = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(";");
+    const obj    = {};
+    headers.forEach((h, idx) => obj[h] = values[idx] ? values[idx].trim() : "");
+    obj._id = obj["Nro"] + "-" + obj["Folio"];
+    data.push(obj);
+  }
+  return data;
+}
+
+function money(v) { return Number(v || 0).toLocaleString("es-CL"); }
+function toggleProcess(id) { statusMap[id] = !statusMap[id]; renderTable(); }
+
+// ── ASIENTO CONTABLE ─────────────────────────────────────────────
+function addRow(cuenta="", debe="", haber="") {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td><input list="cuentasDatalist" type="text" class="cuenta" value="${cuenta}" placeholder="Cuenta contable"></td>
+    <td><input type="text" class="debe" value="${debe ? money(debe) : ''}" oninput="soloDebe(this);formatNumber(this);updateTotals()" onkeydown="if(event.key==='Enter'){addRow();}"></td>
+    <td><input type="text" class="haber" value="${haber ? money(haber) : ''}" oninput="soloHaber(this);formatNumber(this);updateTotals()" onkeydown="if(event.key==='Enter'){addRow();}"></td>
+    <td><button onclick="this.closest('tr').remove();updateTotals()">X</button></td>
+  `;
+  document.getElementById("asientoBody").appendChild(tr);
+  updateTotals();
+}
+
+function updateTotals() {
+  let totalDebe = 0, totalHaber = 0;
+  document.querySelectorAll(".debe").forEach(i  => { let v = i.value.replace(/\./g,''); totalDebe  += Number(v||0); });
+  document.querySelectorAll(".haber").forEach(i => { let v = i.value.replace(/\./g,''); totalHaber += Number(v||0); });
+  document.getElementById("totalDebe").innerText  = money(totalDebe);
+  document.getElementById("totalHaber").innerText = money(totalHaber);
+}
+
+function soloDebe(input)  { if(input.value.trim() !== "") input.closest("tr").querySelector(".haber").value = ""; }
+function soloHaber(input) { if(input.value.trim() !== "") input.closest("tr").querySelector(".debe").value  = ""; }
+
+function actualizarDatalistCuentas() {
+  const dl = document.getElementById("cuentasDatalist");
+  dl.innerHTML = planCuentas.map(c => `<option value="${c}">`).join("\n");
+}
+
+// ── MODAL ASIENTO ────────────────────────────────────────────────
+async function openAccountModal(id) {
+  currentId = id;
+  const r = allRows.find(x => x._id === id);
+  document.getElementById("mProveedor").innerText = r.RazonSocial;
+  document.getElementById("mRut").innerText       = r.RUTProveedor;
+  document.getElementById("mFolio").innerText     = r.Folio;
+  document.getElementById("mFecha").innerText     = r.FechaDocto;
+  document.getElementById("mGlosa").value         = "Compra factura " + r.Folio + " " + r.RazonSocial;
+
+  const neto  = Number(r.MontoNeto  || 0);
+  const iva   = Number(r.MontoIVA   || 0);
+  const total = Number(r.MontoTotal || 0);
+
+  document.getElementById("asientoBody").innerHTML = "";
+  addRow("6101 Compras",      neto,  "");
+  addRow("1190 IVA Crédito",  iva,   "");
+  addRow("2101 Proveedores",  "",    total);
+
+  // Cargar documento en iframe
+  const clave = String(r["ClavePDF"] || "").trim();
+  if (txtFiles.has(clave)) {
+    document.getElementById("docFrame").src = "";
+    const url = await getDocUrl(clave);
+    if (url) document.getElementById("docFrame").src = url;
+    else     document.getElementById("docFrame").srcdoc = "<p style='padding:20px;color:#999'>No se pudo descifrar el documento.</p>";
+  } else {
+    document.getElementById("docFrame").srcdoc = "<p style='padding:20px;color:#999'>Documento no disponible.</p>";
+  }
+
+  document.getElementById("accountModal").style.display = "block";
+}
+
+function closeModal() { document.getElementById("accountModal").style.display = "none"; }
+
+function saveAccount() {
+  const row  = allRows.find(r => r._id === currentId);
+  row.Glosa  = document.getElementById("mGlosa").value;
+  document.querySelectorAll("#asientoBody tr").forEach((tr, index) => {
+    row[`Cuenta${index+1}`] = tr.querySelector(".cuenta").value;
+    row[`Debe${index+1}`]   = tr.querySelector(".debe").value  || 0;
+    row[`Haber${index+1}`]  = tr.querySelector(".haber").value || 0;
+  });
+  accountMap[currentId] = "Asiento creado";
+  renderTable();
+  closeModal();
+}
+
+function downloadCSV() {
+  if (!allRows.length) return;
+  const headersSet = new Set();
+  allRows.forEach(r => Object.keys(r).forEach(h => headersSet.add(h)));
+  const headers = Array.from(headersSet);
+  const csv = [headers.join(";"), ...allRows.map(r => headers.map(h => r[h] ?? "").join(";"))].join("\n");
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "documentos_actualizados.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── RENDER TABLE ─────────────────────────────────────────────────
+function renderTable() {
+  tbody.innerHTML = "";
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const rows  = filteredRows.slice(start, start + PAGE_SIZE);
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    if (statusMap[r._id]) tr.classList.add("processed-row");
+    if (filteredRows.length !== allRows.length) tr.classList.add("filtered-row");
+    tr.innerHTML = `
+      <td style="text-align:center">
+        <input type="checkbox" ${statusMap[r._id] ? "checked" : ""} onclick="toggleProcess('${r._id}')">
+      </td>
+      <td>${r["Nro"] || ""}</td>
+      <td>${r["TipoDoc"] || ""}</td>
+      <td>${r["RUTProveedor"] || ""}</td>
+      <td title="${r["RazonSocial"] || ""}">${r["RazonSocial"] || ""}</td>
+      <td>${r["Folio"] || ""}</td>
+      <td>${r["FechaDocto"] || ""}</td>
+      <td class="money">${money(r["MontoExento"])}</td>
+      <td class="money">${money(r["MontoNeto"])}</td>
+      <td class="money">${money(r["MontoIVA"])}</td>
+      <td class="money">${money(r["MontoTotal"])}</td>
+      <td>
+        <button onclick="openAccountModal('${r._id}')">
+          ${accountMap[r._id] ? "Editar asiento" : "Crear asiento"}
+        </button>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── PAGINACIÓN ───────────────────────────────────────────────────
+function renderPagination() {
+  const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE) || 1;
+  paginacion.innerHTML = "";
+  const prev = document.createElement("button");
+  prev.textContent = "◀ Anterior"; prev.disabled = currentPage === 1;
+  prev.onclick = () => { currentPage--; renderTable(); renderPagination(); };
+  const next = document.createElement("button");
+  next.textContent = "Siguiente ▶"; next.disabled = currentPage === totalPages;
+  next.onclick = () => { currentPage++; renderTable(); renderPagination(); };
+  const info = document.createElement("span");
+  info.textContent = ` Página ${currentPage} de ${totalPages} `;
+  paginacion.append(prev, info, next);
+}
+
+// ── FILTROS ──────────────────────────────────────────────────────
+function applyFilters() {
+  const tipo        = fTipo.value.toLowerCase();
+  const rut         = fRut.value.toLowerCase();
+  const razon       = fRazon.value.toLowerCase();
+  const folio       = fFolio.value.toLowerCase();
+  const fechaFiltro = fFecha.value;
+  const html        = fPdf.value;
+  filteredRows = allRows.filter(r => {
+    let fecha = r["FechaDocto"] || "";
+    if (fecha.includes("-")) { const [d,m,y] = fecha.split("-"); fecha = `${y}-${m}-${d}`; }
+    const clave    = String(r["ClavePDF"] || "").trim();
+    const tieneTxt = txtFiles.has(clave);
+    if (tipo  && !(r["TipoDoc"]      || "").toLowerCase().includes(tipo))  return false;
+    if (rut   && !(r["RUTProveedor"] || "").toLowerCase().includes(rut))   return false;
+    if (razon && !(r["RazonSocial"]  || "").toLowerCase().includes(razon)) return false;
+    if (folio && !(r["Folio"]        || "").toLowerCase().includes(folio)) return false;
+    if (fechaFiltro && fecha !== fechaFiltro) return false;
+    if (html === "con" && !tieneTxt) return false;
+    if (html === "sin" &&  tieneTxt) return false;
+    return true;
+  });
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
+
+function resetFilters() {
+  document.querySelectorAll(".filters input, .filters select").forEach(el => el.value = "");
+  filteredRows = [...allRows];
+  currentPage  = 1;
+  renderTable();
+  renderPagination();
+}
+
+function formatNumber(input) {
+  let value = input.value.replace(/\./g,'').replace(/[^\d]/g,'');
+  if (value === "") { input.value = ""; return; }
+  input.value = Number(value).toLocaleString("es-CL");
+}
+</script>
+</body>
+</html>
