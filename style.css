@@ -318,7 +318,9 @@ table tbody td, table thead th {
   border: none;
   line-height: 1;
 }
-.modal-close:hover { background: #c0392b; color: white; }
+
+.modal-close { background: #c0392b; color: white; border-radius: 4px; }
+.modal-close:hover { background: #922b21; }
 
 .asiento-panel table tbody tr:nth-child(even) {
   background: white;
