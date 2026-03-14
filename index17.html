@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<title>Listado de Documentos</title>
+<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/choices.js/public/assets/styles/choices.min.css">
+<script src="https://cdn.jsdelivr.net/npm/choices.js/public/assets/scripts/choices.min.js"></script>
+<style>
+/* ── MODAL CLAVE ── */
+#modalOverlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.45);
+  display:flex; align-items:center; justify-content:center;
+  z-index:9999;
+}
+#modalBox {
+  background:#fff; padding:32px 36px; border-radius:10px;
+  box-shadow:0 12px 25px rgba(0,0,0,.2);
+  width:100%; max-width:360px; text-align:center;
+}
+#modalBox h3 { margin:0 0 8px; font-size:18px; color:#1f2937; }
+#modalBox p  { margin:0 0 18px; font-size:13px; color:#6b7280; }
+#modalBox input {
+  width:100%; padding:10px 12px;
+  border:1px solid #d1d5db; border-radius:6px;
+  font-size:14px; margin-bottom:12px;
+}
+#modalBox input:focus { outline:none; border-color:#6b7280; }
+#modalBox button {
+  width:100%; padding:11px;
+  background:#374151; color:#fff;
+  border:none; border-radius:6px;
+  font-size:14px; cursor:pointer;
+}
+#modalBox button:hover { background:#1f2937; }
+#modalError { display:none; color:#991b1b; font-size:12px; margin-bottom:10px; }
+#loadingMsg { text-align:center; padding:20px; color:#6b7280; font-size:14px; }
+
+/* ── PAGINACIÓN IR A PÁGINA ── */
+#goPageWrap {
+  display:inline-flex; align-items:center; gap:4px; margin-left:12px;
+}
+#goPageWrap input {
+  width:52px; padding:4px 6px;
+  border:1px solid #d1d5db; border-radius:5px;
+  font-size:13px; text-align:center;
+}
+#goPageWrap button {
+  padding:4px 10px; background:#374151; color:#fff;
+  border:none; border-radius:5px; font-size:13px; cursor:pointer;
+}
+#goPageWrap button:hover { background:#1f2937; }
+
+/* ── MODAL BUSCADOR DE CUENTAS ── */
+#cuentaModalOverlay {
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.25);
+  display:none; align-items:flex-start; justify-content:flex-start;
+  z-index:99999;
+}
+#cuentaModalOverlay.open { display:flex; }
+#cuentaModalBox {
+  background:#fff; border-radius:0 10px 10px 0;
+  box-shadow:4px 0 24px rgba(0,0,0,.2);
+  width:660px; min-width:320px;
+  height:100vh; max-height:100vh;
+  display:flex; flex-direction:column;
+  overflow:hidden;
+}
+#cuentaModalBox .cm-header {
+  padding:16px 20px 12px;
+  border-bottom:1px solid #e5e7eb;
+  display:flex; align-items:center; gap:10px;
+}
+#cuentaModalBox .cm-header h4 {
+  margin:0; font-size:15px; color:#1f2937; flex:1;
+}
+#cuentaModalBox .cm-header button.cm-close {
+  background:none; border:none; font-size:18px;
+  color:#9ca3af; cursor:pointer; padding:0 4px; line-height:1;
+}
+#cuentaModalBox .cm-header button.cm-close:hover { color:#374151; }
+#cuentaSearch {
+  margin:12px 20px 8px;
+  padding:9px 12px;
+  border:1px solid #d1d5db; border-radius:7px;
+  font-size:13px; width:calc(100% - 40px);
+  box-sizing:border-box;
+}
+#cuentaSearch:focus { outline:none; border-color:#6b7280; }
+#cuentaSearchInfo {
+  padding:0 20px 6px;
+  font-size:11px; color:#9ca3af;
+}
+#cuentaList {
+  overflow-y:auto; flex:1;
+  padding:0 8px 12px;
+}
+#cuentaList table {
+  width:100%; border-collapse:collapse; font-size:13px;
+}
+#cuentaList th {
+  position:sticky; top:0; background:#f9fafb;
+  padding:7px 10px; text-align:left;
+  border-bottom:1px solid #e5e7eb;
+  font-size:12px; color:#6b7280; font-weight:600;
+}
+#cuentaList tr.cm-row:hover { background:#eff6ff; cursor:pointer; }
+#cuentaList td {
+  padding:6px 10px; border-bottom:1px solid #f3f4f6;
+  vertical-align:middle;
+}
+#cuentaList td.cm-code {
+  font-family:monospace; color:#374151; white-space:nowrap; width:90px;
+}
+#cuentaList td.cm-nombre { color:#111827; }
+#cuentaList td.cm-tipo {
+  color:#6b7280; font-size:11px; white-space:nowrap; width:80px;
+}
+#cuentaList .cm-empty {
+  text-align:center; padding:30px; color:#9ca3af; font-size:13px;
+}
+/* ── TABLA ASIENTO - columnas fijas ── */
+table.asiento { table-layout:fixed; width:100%; }
+table.asiento th:nth-child(1),
+table.asiento td:nth-child(1) { width:38px;  text-align:center; padding:2px 4px; }
+table.asiento th:nth-child(2),
+table.asiento td:nth-child(2) { width:auto; }
+table.asiento th:nth-child(3),
+table.asiento td:nth-child(3) { width:110px; }
+table.asiento th:nth-child(4),
+table.asiento td:nth-child(4) { width:110px; }
+table.asiento th:nth-child(5),
+table.asiento td:nth-child(5) { width:32px;  text-align:center; padding:2px 4px; }
+table.asiento td input.cuenta { width:100%; box-sizing:border-box; }
+table.asiento td input.debe,
+table.asiento td input.haber  { width:100%; box-sizing:border-box; }
+</style>
+</head>
+<body>
+
+<!-- MODAL CLAVE -->
+<div id="modalOverlay">
+  <div id="modalBox">
+    <h3>Clave de acceso</h3>
+    <p>Ingresa la clave para descifrar los documentos</p>
+    <div id="modalError">Clave requerida</div>
+    <input type="password" id="claveInput" placeholder="Contraseña"
+           onkeydown="if(event.key==='Enter') submitClave()">
+    <button onclick="submitClave()">Continuar</button>
+  </div>
+</div>
+
+<!-- MODAL BUSCADOR DE CUENTAS -->
+<div id="cuentaModalOverlay">
+  <div id="cuentaModalBox">
+    <div class="cm-header">
+      <h4>🔍 Plan de Cuentas</h4>
+      <button class="cm-close" onclick="closeCuentaModal()">✕</button>
+    </div>
+    <input type="text" id="cuentaSearch" placeholder="Buscar por código o nombre..."
+           oninput="filterCuentas()" autocomplete="off">
+    <div id="cuentaSearchInfo"></div>
+    <div id="cuentaList">
+      <table>
+        <thead>
+          <tr>
+            <th>Código</th>
+            <th>Nombre</th>
+            <th>Tipo</th>
+          </tr>
+        </thead>
+        <tbody id="cuentaListBody"></tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<div class="container">
+  <h2>Listado de Documentos Tributarios</h2>
+  <div id="loadingMsg" style="display:none">Cargando documentos...</div>
+  <div class="filters" id="filtros" style="display:none">
+    <input type="text" id="fTipo"  placeholder="TipoDoc">
+    <input type="text" id="fRut"   placeholder="RUT">
+    <input type="text" id="fRazon" placeholder="Razón Social">
+    <input type="text" id="fFolio" placeholder="Folio">
+    <label>Fecha:</label>
+    <input type="date" id="fFecha">
+    <select id="fPdf">
+      <option value="">HTML: Todos</option>
+      <option value="con">Con HTML</option>
+      <option value="sin">Sin HTML</option>
+    </select>
+    <button onclick="applyFilters()">Aplicar</button>
+    <button onclick="resetFilters()">Limpiar</button>
+  </div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ok</th><th>Nro</th><th>Td</th><th>RUT</th>
+        <th>RazonSocial</th><th>Folio</th><th>Fecha</th>
+        <th class="money"><b>Exento</b></th>
+        <th class="money"><b>Neto</b></th>
+        <th class="money"><b>IVA</b></th>
+        <th class="money"><b>Total</b></th>
+        <th>Comprobante</th>
+      </tr>
+    </thead>
+    <tbody id="tbody"></tbody>
+  </table>
+  <div id="paginacion" style="margin-top:15px;text-align:center;"></div>
+</div>
+
+<!-- MODAL ERP -->
+<div id="accountModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-grid">
+      <div class="asiento-panel">
+        <table style="border:none;margin-bottom:6px;font-size:13px;width:auto;">
+          <tr>
+            <td style="border:none;padding:3px 8px 3px 0;font-weight:bold;color:#555;white-space:nowrap;width:80px;">RUT</td>
+            <td style="border:none;padding:3px 0">
+              <input type="text" id="mRut" placeholder="Ingrese RUT"
+                style="width:100px;padding:3px 6px;border:1px solid #cfd6dd;border-radius:3px;font-size:13px;"
+                oninput="validarRut()">
+              <span id="mRutError" style="color:#c0392b;font-size:12px;margin-left:6px;display:none;">RUT incorrecto</span>
+            </td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:3px 8px 3px 0;font-weight:bold;color:#555;white-space:nowrap;">Proveedor</td>
+            <td style="border:none;padding:3px 0;">
+              <span id="mProveedor"
+                style="font-size:13px;display:inline-block;min-width:360px;padding:3px 6px;
+                       border:1px solid #cfd6dd;border-radius:3px;background:#f9fafb;color:#222;"></span>
+            </td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:3px 8px 3px 0;font-weight:bold;color:#555;">Folio</td>
+            <td style="border:none;padding:3px 0">
+              <input type="text" id="mFolio"
+                style="width:100px;padding:3px 6px;border:1px solid #cfd6dd;border-radius:3px;font-size:13px;">
+            </td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:3px 8px 3px 0;font-weight:bold;color:#555;">Fecha</td>
+            <td style="border:none;padding:3px 0">
+              <input type="text" id="mFecha"
+                style="width:100px;padding:3px 6px;border:1px solid #cfd6dd;border-radius:3px;font-size:13px;">
+            </td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:3px 8px 3px 0;font-weight:bold;color:#555;">Fecha Vcto</td>
+            <td style="border:none;padding:3px 0">
+              <input type="text" id="mFechaVcto"
+                style="width:100px;padding:3px 6px;border:1px solid #cfd6dd;border-radius:3px;font-size:13px;">
+            </td>
+          </tr>
+          <tr>
+            <td style="border:none;padding:3px 8px 3px 0;font-weight:bold;color:#555;">Glosa</td>
+            <td style="border:none;padding:3px 0">
+              <input type="text" id="mGlosa"
+                style="width:360px;padding:3px 6px;border:1px solid #cfd6dd;border-radius:3px;font-size:13px;">
+            </td>
+          </tr>
+        </table>
+        <br>
+        <table class="asiento">
+          <thead>
+            <tr>
+              <th style="width:40px"></th>
+              <th>Cuenta</th>
+              <th>Debe</th>
+              <th>Haber</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="asientoBody"></tbody>
+        </table>
+        <br>
+        <button onclick="addRow()">+ Agregar Cuenta</button>
+        <br><br>
+        <div style="text-align:right">
+          <b>Total Debe:</b>  <span id="totalDebe"></span><br>
+          <b>Total Haber:</b> <span id="totalHaber"></span>
+        </div>
+        <br>
+        <button onclick="saveAccount()">Guardar</button>
+        <button onclick="closeModal()">Cerrar</button>
+        <button onclick="downloadCSV()">Descargar CSV</button>
+      </div>
+      <div class="resizer"></div>
+      <div class="factura">
+        <iframe id="docFrame"></iframe>
+      </div>
+    </div>
+  </div>
+</div>
+
+<datalist id="cuentasDatalist"></datalist>
+
+<script>
+// ── CONFIG ───────────────────────────────────────────────────────
+const BASE_URL = "https://6779828269795057495548.github.io/6779828269795057495548/";
+const CSV_FILE = "Tmp.csv";
+const API_URL  = "https://api.github.com/repos/6779828269795057495548/6779828269795057495548/contents/";
+
+// ── CLAVE ────────────────────────────────────────────────────────
+let PASSWORD = "";
+function submitClave() {
+  const val = document.getElementById("claveInput").value.trim();
+  if (!val) { document.getElementById("modalError").style.display = "block"; return; }
+  PASSWORD = val;
+  document.getElementById("modalOverlay").style.display = "none";
+  initApp();
+}
+
+// ── DESCIFRADO AES-CBC + PBKDF2 ──────────────────────────────────
+async function decryptTxt(base64str, password) {
+  try {
+    const raw        = Uint8Array.from(atob(base64str.trim()), c => c.charCodeAt(0));
+    const salt       = raw.slice(0,  16);
+    const iv         = raw.slice(16, 32);
+    const ciphertext = raw.slice(32);
+    const keyMaterial = await crypto.subtle.importKey(
+      "raw", new TextEncoder().encode(password), "PBKDF2", false, ["deriveKey"]
+    );
+    const aesKey = await crypto.subtle.deriveKey(
+      { name:"PBKDF2", salt, iterations:100000, hash:"SHA-1" },
+      keyMaterial, { name:"AES-CBC", length:256 }, false, ["decrypt"]
+    );
+    const plain = await crypto.subtle.decrypt({ name:"AES-CBC", iv }, aesKey, ciphertext);
+    return new TextDecoder("utf-8").decode(plain);
+  } catch(e) { return null; }
+}
+
+// ── ESTADO ───────────────────────────────────────────────────────
+const tbody      = document.getElementById("tbody");
+const paginacion = document.getElementById("paginacion");
+const PAGE_SIZE  = 10;
+let allRows      = [];
+let filteredRows = [];
+let txtFiles     = new Set();
+let htmlCache    = {};
+let planCuentas  = [];   // [{codigo, nombre, tipo}]
+let currentPage  = 1;
+let statusMap    = {};
+let accountMap   = {};
+let currentId    = null;
+
+// callback que recibe la cuenta elegida en el modal
+let _cuentaCallback = null;
+
+// ── INIT ─────────────────────────────────────────────────────────
+async function initApp() {
+  const loadingMsg = document.getElementById("loadingMsg");
+  loadingMsg.style.display = "block";
+  loadingMsg.textContent   = "Cargando documentos...";
+  try {
+    const apiRes  = await fetch(API_URL);
+    const apiJson = await apiRes.json();
+    txtFiles = new Set(
+      apiJson
+        .filter(f => f.name.toLowerCase().endsWith(".txt"))
+        .map(f => f.name.replace(/\.txt$/i, "").trim())
+    );
+    const csvRes  = await fetch(BASE_URL + CSV_FILE);
+    const csvText = await csvRes.text();
+    allRows       = parseCSV(csvText);
+    filteredRows  = [...allRows];
+    currentPage   = 1;
+
+    // ── Cargar plan de cuentas desde cuentas.csv ─────────────────
+    try {
+      const planRes = await fetch(BASE_URL + "cuentas.csv");
+      if (planRes.ok) {
+        const planText = await planRes.text();
+        planCuentas    = parseCuentasCSV(planText);
+        actualizarDatalistCuentas();
+      }
+    } catch(e) { /* opcional */ }
+
+    loadingMsg.style.display = "none";
+    document.getElementById("filtros").style.display = "flex";
+    renderTable();
+    renderPagination();
+    document.querySelectorAll(".filters input, .filters select")
+      .forEach(el => el.addEventListener("input", applyFilters));
+  } catch(err) {
+    loadingMsg.textContent = "Error al cargar: " + err.message;
+  }
+}
+
+// ── PARSEO cuentas.csv ────────────────────────────────────────────
+// Soporta separadores ; o , y columnas variables
+function parseCuentasCSV(text) {
+  const lines = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  return lines.map(l => {
+    const idx    = l.indexOf(",");
+    if (idx < 0) return null;
+    const codigo = l.slice(0, idx).trim();
+    const nombre = l.slice(idx + 1).trim();
+    return { codigo, nombre, tipo: "" };
+  }).filter(Boolean);
+}
+
+function actualizarDatalistCuentas() {
+  const dl = document.getElementById("cuentasDatalist");
+  dl.innerHTML = planCuentas.map(c => `<option value="${c.codigo} - ${c.nombre}">`).join("\n");
+}
+
+// ── MODAL BUSCADOR DE CUENTAS ────────────────────────────────────
+let _cuentasFiltradas = [];
+
+function openCuentaModal(callback) {
+  _cuentaCallback = callback;
+  _cuentasFiltradas = [...planCuentas];
+  document.getElementById("cuentaSearch").value = "";
+  renderCuentaList(planCuentas);
+  document.getElementById("cuentaModalOverlay").classList.add("open");
+  setTimeout(() => document.getElementById("cuentaSearch").focus(), 80);
+}
+
+function closeCuentaModal() {
+  document.getElementById("cuentaModalOverlay").classList.remove("open");
+  _cuentaCallback = null;
+}
+
+function filterCuentas() {
+  const q = document.getElementById("cuentaSearch").value.trim().toLowerCase();
+  const filtered = q
+    ? planCuentas.filter(c =>
+        c.codigo.toLowerCase().includes(q) ||
+        c.nombre.toLowerCase().includes(q) ||
+        c.tipo.toLowerCase().includes(q))
+    : [...planCuentas];
+  renderCuentaList(filtered);
+}
+
+function renderCuentaList(list) {
+  const tbody = document.getElementById("cuentaListBody");
+  const info  = document.getElementById("cuentaSearchInfo");
+  info.textContent = list.length
+    ? `${list.length} cuenta${list.length !== 1 ? "s" : ""} encontrada${list.length !== 1 ? "s" : ""}`
+    : "";
+  if (!list.length) {
+    tbody.innerHTML = `<tr><td colspan="3" class="cm-empty">Sin resultados para esa búsqueda</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map(c => `
+    <tr class="cm-row" onclick="selectCuenta('${escHtml(c.codigo)}','${escHtml(c.nombre)}')">
+      <td class="cm-code">${escHtml(c.codigo)}</td>
+      <td class="cm-nombre">${escHtml(c.nombre)}</td>
+      <td class="cm-tipo">${escHtml(c.tipo)}</td>
+    </tr>`).join("");
+}
+
+function selectCuenta(codigo, nombre) {
+  if (_cuentaCallback) {
+    _cuentaCallback(codigo, nombre);
+  }
+  closeCuentaModal();
+}
+
+// Cerrar con Escape
+document.addEventListener("keydown", e => {
+  if (e.key === "Escape") closeCuentaModal();
+});
+// Cerrar al click en overlay
+document.getElementById("cuentaModalOverlay").addEventListener("click", function(e) {
+  if (e.target === this) closeCuentaModal();
+});
+
+function escHtml(str) {
+  return String(str || "")
+    .replace(/&/g,"&amp;").replace(/</g,"&lt;")
+    .replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#39;");
+}
+
+// ── OBTENER URL DOCUMENTO ─────────────────────────────────────────
+async function getDocUrl(clave) {
+  if (htmlCache[clave]) return htmlCache[clave];
+  try {
+    const res = await fetch(BASE_URL + clave + ".txt");
+    if (!res.ok) return null;
+    const b64  = await res.text();
+    const html = await decryptTxt(b64, PASSWORD);
+    if (!html) return null;
+    const url = URL.createObjectURL(new Blob([html], { type:"text/html;charset=utf-8" }));
+    htmlCache[clave] = url;
+    return url;
+  } catch(e) { return null; }
+}
+
+// ── PARSEO CSV DOCUMENTOS ─────────────────────────────────────────
+function parseCSV(text) {
+  const lines   = text.split(/\r?\n/).filter(l => l.trim() !== "");
+  const headers = lines[0].split(";").map(h => h.trim());
+  const data    = [];
+  for (let i = 1; i < lines.length; i++) {
+    const values = lines[i].split(";");
+    const obj    = {};
+    headers.forEach((h, idx) => obj[h] = values[idx] ? values[idx].trim() : "");
+    obj._id = obj["Nro"] + "-" + obj["Folio"];
+    data.push(obj);
+  }
+  return data;
+}
+function money(v) { return Number(v || 0).toLocaleString("es-CL"); }
+function toggleProcess(id) { statusMap[id] = !statusMap[id]; renderTable(); }
+
+// ── ASIENTO CONTABLE ──────────────────────────────────────────────
+// ✅ Botón 🔍 en cada fila abre el modal de cuentas
+function addRow(cuenta="", debe="", haber="") {
+  const tr = document.createElement("tr");
+  tr.innerHTML = `
+    <td style="text-align:center">
+      <button title="Buscar cuenta" onclick="abrirBuscadorParaFila(this)"
+        style="background:#374151;color:#fff;border:none;border-radius:4px;
+               padding:2px 7px;cursor:pointer;font-size:13px;">🔍</button>
+    </td>
+    <td>
+      <input list="cuentasDatalist" type="text" class="cuenta"
+        value="${escHtml(cuenta)}" placeholder="Cuenta contable"
+        style="min-width:200px;">
+    </td>
+    <td><input type="text" class="debe"  value="${debe  ? money(debe)  : ''}"
+         oninput="soloDebe(this);formatNumber(this);updateTotals()"
+         onkeydown="if(event.key==='Enter'){addRow();}"></td>
+    <td><input type="text" class="haber" value="${haber ? money(haber) : ''}"
+         oninput="soloHaber(this);formatNumber(this);updateTotals()"
+         onkeydown="if(event.key==='Enter'){addRow();}"></td>
+    <td><button onclick="this.closest('tr').remove();updateTotals()">X</button></td>
+  `;
+  document.getElementById("asientoBody").appendChild(tr);
+  updateTotals();
+}
+
+// Abre el buscador vinculado al input de la fila clickeada
+function abrirBuscadorParaFila(btn) {
+  const tr    = btn.closest("tr");
+  const input = tr.querySelector(".cuenta");
+  openCuentaModal((codigo, nombre) => {
+    input.value = codigo + " - " + nombre;
+  });
+}
+
+function updateTotals() {
+  let totalDebe = 0, totalHaber = 0;
+  document.querySelectorAll(".debe").forEach(i  => {
+    totalDebe  += Number(i.value.replace(/\./g,'') || 0);
+  });
+  document.querySelectorAll(".haber").forEach(i => {
+    totalHaber += Number(i.value.replace(/\./g,'') || 0);
+  });
+  document.getElementById("totalDebe").innerText  = money(totalDebe);
+  document.getElementById("totalHaber").innerText = money(totalHaber);
+}
+function soloDebe(input)  { if(input.value.trim()) input.closest("tr").querySelector(".haber").value = ""; }
+function soloHaber(input) { if(input.value.trim()) input.closest("tr").querySelector(".debe").value  = ""; }
+
+function validarRut() {
+  const r     = allRows.find(x => x._id === currentId);
+  const input = document.getElementById("mRut").value.trim();
+  const rutOk = input === r.RUTProveedor;
+  document.getElementById("mRutError").style.display = (input && !rutOk) ? "inline" : "none";
+  document.getElementById("mProveedor").innerText    = rutOk ? r.RazonSocial : "";
+}
+
+// ── MODAL ERP ─────────────────────────────────────────────────────
+async function openAccountModal(id) {
+  currentId = id;
+  const r = allRows.find(x => x._id === id);
+  document.getElementById("mRut").value           = "";
+  document.getElementById("mProveedor").innerText = "";
+  document.getElementById("mFolio").value         = "";
+  document.getElementById("mFecha").value         = "";
+  document.getElementById("mFechaVcto").value     = "";
+  document.getElementById("mGlosa").value         = "";
+  document.getElementById("mRutError").style.display = "none";
+  document.getElementById("asientoBody").innerHTML = "";
+  updateTotals();
+
+  const clave = String(r["ClavePDF"] || "").trim();
+  if (txtFiles.has(clave)) {
+    document.getElementById("docFrame").src = "";
+    const url = await getDocUrl(clave);
+    if (url) document.getElementById("docFrame").src = url;
+    else     document.getElementById("docFrame").srcdoc = "<p style='padding:20px;color:#999'>No se pudo descifrar el documento.</p>";
+  } else {
+    document.getElementById("docFrame").srcdoc = "<p style='padding:20px;color:#999'>Documento no disponible.</p>";
+  }
+  document.getElementById("accountModal").style.display = "block";
+}
+
+function closeModal() { document.getElementById("accountModal").style.display = "none"; }
+
+function saveAccount() {
+  const r   = allRows.find(x => x._id === currentId);
+  const rut = document.getElementById("mRut").value.trim();
+  if (rut !== r.RUTProveedor) {
+    document.getElementById("mRutError").style.display = "inline";
+    document.getElementById("mRut").focus();
+    return;
+  }
+  r.Glosa = document.getElementById("mGlosa").value;
+  document.querySelectorAll("#asientoBody tr").forEach((tr, index) => {
+    r[`Cuenta${index+1}`] = tr.querySelector(".cuenta").value;
+    r[`Debe${index+1}`]   = tr.querySelector(".debe").value  || 0;
+    r[`Haber${index+1}`]  = tr.querySelector(".haber").value || 0;
+  });
+  accountMap[currentId] = "Asiento creado";
+  renderTable();
+  closeModal();
+}
+
+function downloadCSV() {
+  if (!allRows.length) return;
+  const headersSet = new Set();
+  allRows.forEach(r => Object.keys(r).forEach(h => headersSet.add(h)));
+  const headers = Array.from(headersSet);
+  const csv = [
+    headers.join(";"),
+    ...allRows.map(r => headers.map(h => r[h] ?? "").join(";"))
+  ].join("\n");
+  const blob = new Blob([csv], { type:"text/csv;charset=utf-8" });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement("a");
+  a.href = url; a.download = "documentos_actualizados.csv"; a.click();
+  URL.revokeObjectURL(url);
+}
+
+// ── RENDER TABLE ──────────────────────────────────────────────────
+function renderTable() {
+  tbody.innerHTML = "";
+  const start = (currentPage - 1) * PAGE_SIZE;
+  const rows  = filteredRows.slice(start, start + PAGE_SIZE);
+  rows.forEach(r => {
+    const tr = document.createElement("tr");
+    if (statusMap[r._id]) tr.classList.add("processed-row");
+    if (filteredRows.length !== allRows.length) tr.classList.add("filtered-row");
+    tr.innerHTML = `
+      <td style="text-align:center">
+        <input type="checkbox" ${statusMap[r._id] ? "checked" : ""} onclick="toggleProcess('${r._id}')">
+      </td>
+      <td>${r["Nro"]          || ""}</td>
+      <td>${r["TipoDoc"]      || ""}</td>
+      <td>${r["RUTProveedor"] || ""}</td>
+      <td title="${r["RazonSocial"] || ""}">${r["RazonSocial"] || ""}</td>
+      <td>${r["Folio"]        || ""}</td>
+      <td>${r["FechaDocto"]   || ""}</td>
+      <td class="money">${money(r["MontoExento"])}</td>
+      <td class="money">${money(r["MontoNeto"])}</td>
+      <td class="money">${money(r["MontoIVA"])}</td>
+      <td class="money">${money(r["MontoTotal"])}</td>
+      <td>
+        <a href="#" onclick="openAccountModal('${r._id}');return false;" style="font-size:13px;">
+          ${accountMap[r._id] ? "Editar asiento" : "Abrir"}
+        </a>
+      </td>`;
+    tbody.appendChild(tr);
+  });
+}
+
+// ── PAGINACIÓN ────────────────────────────────────────────────────
+function renderPagination() {
+  const totalPages = Math.ceil(filteredRows.length / PAGE_SIZE) || 1;
+  paginacion.innerHTML = "";
+
+  const prev = document.createElement("button");
+  prev.textContent = "◀ Anterior";
+  prev.disabled    = currentPage === 1;
+  prev.onclick     = () => { currentPage--; renderTable(); renderPagination(); };
+
+  const info = document.createElement("span");
+  info.textContent = ` Página ${currentPage} de ${totalPages} `;
+
+  const next = document.createElement("button");
+  next.textContent = "Siguiente ▶";
+  next.disabled    = currentPage === totalPages;
+  next.onclick     = () => { currentPage++; renderTable(); renderPagination(); };
+
+  const goWrap  = document.createElement("span");
+  goWrap.id     = "goPageWrap";
+  const goLabel = document.createElement("label");
+  goLabel.textContent  = " Ir a:";
+  goLabel.style.cssText = "margin-left:12px;font-size:13px;";
+  const goInput = document.createElement("input");
+  goInput.type = "number"; goInput.min = 1; goInput.max = totalPages;
+  goInput.placeholder = "#";
+  goInput.style.cssText = "width:52px;padding:4px 6px;border:1px solid #d1d5db;border-radius:5px;font-size:13px;text-align:center;margin-left:4px;";
+  goInput.onkeydown = e => { if (e.key === "Enter") goToPage(goInput, totalPages); };
+  const goBtn = document.createElement("button");
+  goBtn.textContent = "Ir";
+  goBtn.style.cssText = "padding:4px 10px;background:#374151;color:#fff;border:none;border-radius:5px;font-size:13px;cursor:pointer;margin-left:4px;";
+  goBtn.onmouseover = () => goBtn.style.background = "#1f2937";
+  goBtn.onmouseout  = () => goBtn.style.background = "#374151";
+  goBtn.onclick     = () => goToPage(goInput, totalPages);
+  goWrap.append(goLabel, goInput, goBtn);
+
+  paginacion.append(prev, info, next, goWrap);
+}
+
+function goToPage(input, totalPages) {
+  const page = parseInt(input.value, 10);
+  if (!isNaN(page) && page >= 1 && page <= totalPages) {
+    currentPage = page; input.value = "";
+    renderTable(); renderPagination();
+  } else {
+    input.style.borderColor = "#c0392b";
+    setTimeout(() => input.style.borderColor = "#d1d5db", 1200);
+  }
+}
+
+// ── FILTROS ───────────────────────────────────────────────────────
+function applyFilters() {
+  const tipo        = fTipo.value.toLowerCase();
+  const rut         = fRut.value.toLowerCase();
+  const razon       = fRazon.value.toLowerCase();
+  const folio       = fFolio.value.toLowerCase();
+  const fechaFiltro = fFecha.value;
+  const html        = fPdf.value;
+  filteredRows = allRows.filter(r => {
+    let fecha = r["FechaDocto"] || "";
+    if (fecha.includes("-")) { const [d,m,y] = fecha.split("-"); fecha = `${y}-${m}-${d}`; }
+    const clave    = String(r["ClavePDF"] || "").trim();
+    const tieneTxt = txtFiles.has(clave);
+    if (tipo  && !(r["TipoDoc"]      || "").toLowerCase().includes(tipo))  return false;
+    if (rut   && !(r["RUTProveedor"] || "").toLowerCase().includes(rut))   return false;
+    if (razon && !(r["RazonSocial"]  || "").toLowerCase().includes(razon)) return false;
+    if (folio && !(r["Folio"]        || "").toLowerCase().includes(folio)) return false;
+    if (fechaFiltro && fecha !== fechaFiltro) return false;
+    if (html === "con" && !tieneTxt) return false;
+    if (html === "sin" &&  tieneTxt) return false;
+    return true;
+  });
+  currentPage = 1;
+  renderTable();
+  renderPagination();
+}
+function resetFilters() {
+  document.querySelectorAll(".filters input, .filters select").forEach(el => el.value = "");
+  filteredRows = [...allRows];
+  currentPage  = 1;
+  renderTable();
+  renderPagination();
+}
+function formatNumber(input) {
+  let value = input.value.replace(/\./g,'').replace(/[^\d]/g,'');
+  if (value === "") { input.value = ""; return; }
+  input.value = Number(value).toLocaleString("es-CL");
+}
+</script>
+</body>
+</html>
