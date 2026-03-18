@@ -7,7 +7,6 @@ $ofd = New-Object System.Windows.Forms.OpenFileDialog
 $ofd.Title = "Selecciona el archivo a subir"
 $ofd.Filter = "Todos los archivos|*.*"
 if ($ofd.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
-    Write-Host "No se seleccionó archivo."
     exit
 }
 
