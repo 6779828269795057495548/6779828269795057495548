@@ -1,0 +1,68 @@
+Clear-Host
+$VerbosePreference = 'SilentlyContinue'
+$WarningPreference = 'SilentlyContinue'
+
+Add-Type -AssemblyName System.Windows.Forms
+$ofd = New-Object System.Windows.Forms.OpenFileDialog
+$ofd.Title = "Selecciona el archivo a subir"
+$ofd.Filter = "Todos los archivos|*.*"
+if ($ofd.ShowDialog() -ne [System.Windows.Forms.DialogResult]::OK) {
+    Write-Host "No se seleccionó archivo."
+    exit
+}
+
+$archivo = $ofd.FileName
+$token   = Read-Host "Ingresa tu token de GitHub"
+$repo    = "6779828269795057495548/6779828269795057495548"   # <-- cambia esto
+$branch  = "main"
+$path    = [System.IO.Path]::GetFileName($archivo)
+
+#Write-Host "Archivo: $path"
+
+$headers = @{
+    Authorization = "token $token"
+    Accept        = "application/vnd.github.v3+json"
+}
+
+# 1. Obtener SHA si el archivo ya existe
+$sha = $null
+try {
+    $uri  = "https://api.github.com/repos/$repo/contents/$path`?ref=$branch"
+    $resp = Invoke-RestMethod -Uri $uri -Headers $headers -ErrorAction Stop
+    $sha  = $resp.sha
+    #Write-Host "SHA obtenido: $sha"
+} catch {
+    $status = $_.Exception.Response.StatusCode.value__
+    if ($status -eq 404) {
+        Write-Host "Archivo nuevo, se creará."
+    } else {
+        Write-Host "Error al consultar: $status - $($_.Exception.Message)"
+        exit
+    }
+}
+
+# 2. Construir body como hashtable y convertir a JSON
+$body = [ordered]@{
+    message = "Subiendo $path"
+    content = [Convert]::ToBase64String([System.IO.File]::ReadAllBytes($archivo))
+    branch  = $branch
+}
+
+# Solo agregar sha si existe (archivo previo)
+if ($null -ne $sha -and $sha -ne '') {
+    $body['sha'] = $sha
+}
+
+$bodyJson = $body | ConvertTo-Json -Compress -Depth 5
+
+# 3. Subir archivo
+try {
+    $uri2 = "https://api.github.com/repos/$repo/contents/$path"
+    $null = Invoke-RestMethod -Method PUT -Uri $uri2 -Headers $headers -Body $bodyJson -ErrorAction Stop
+    Write-Host "Archivo subido exitosamente: "#$path
+} catch {
+    Write-Host "Error al subir: $($_.Exception.Message)"
+    # Mostrar cuerpo del error si está disponible
+    $reader = New-Object System.IO.StreamReader($_.Exception.Response.GetResponseStream())
+    Write-Host $reader.ReadToEnd()
+}
