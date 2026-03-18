@@ -1,0 +1,29 @@
+export default {
+  async fetch(request, env) {
+    const url = new URL(request.url);
+
+    // Guardar datos enviados desde el HTML
+    if (url.pathname === "/save" && request.method === "POST") {
+      const data = await request.json();      // <--- leer JSON
+      const text = data.text;                 // <--- extraer la propiedad
+      if (text) await env.MY_DATA_KV.put("texto1", text); // guardar en KV
+      return new Response(JSON.stringify({ ok: true }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Devolver datos guardados como JSON
+    if (url.pathname === "/data") {
+      const value = await env.MY_DATA_KV.get("texto1");
+      return new Response(JSON.stringify({ data: value || "" }), {
+        headers: { "Content-Type": "application/json" }
+      });
+    }
+
+    // Servir el HTML desde KV
+    const html = await env.MY_HTML_KV.get("index.html");
+    return new Response(html, {
+      headers: { "Content-Type": "text/html; charset=UTF-8" }
+    });
+  },
+};  
