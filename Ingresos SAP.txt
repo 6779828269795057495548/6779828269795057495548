@@ -1,0 +1,1479 @@
+Private Declare Function FindWindow _
+    Lib "user32" _
+    Alias "FindWindowA" ( _
+        ByVal lpClassName As String, _
+        ByVal lpWindowName As String) As Long
+Private Declare Function ShowWindow _
+    Lib "user32" ( _
+        ByVal hwnd As Long, _
+        ByVal nCmdShow As Long) As Long
+Const SW_HIDE = 0
+Const SW_NORMAL = 1
+Dim Handle As Long
+
+Private Sub CommandButton1_Click()
+  Depurar
+End Sub
+
+Private Sub CheckBox1_Click()
+  If CheckBox1.Value = False Then
+    WebBrowser1.Visible = True
+    Sheets("SII").Activate
+    Me.Height = Me.Height - 300
+    Frame1.Height = Frame1.Height - 300
+    ListBox1.Height = ListBox1.Height - 300
+    'TextBox2.Top = TextBox2.Top - 300
+    'TextBox3.Top = TextBox3.Top - 300
+    CommandButton2.Top = CommandButton2.Top - 300
+    CommandButton3.Top = CommandButton3.Top - 300
+    CommandButton4.Top = CommandButton4.Top - 300
+    CommandButton5.Top = CommandButton5.Top - 300
+    ListBox1.Clear
+    TextBox1.Text = ""
+    TextBox1.SetFocus
+  Else
+    WebBrowser1.Visible = False
+    Sheets("Cuentas").Activate
+    Me.Height = Me.Height + 300
+    Frame1.Height = Frame1.Height + 300
+    ListBox1.Height = ListBox1.Height + 300
+    'TextBox2.Top = TextBox2.Top + 300
+    'TextBox3.Top = TextBox3.Top + 300
+    CommandButton2.Top = CommandButton2.Top + 300
+    CommandButton3.Top = CommandButton3.Top + 300
+    CommandButton4.Top = CommandButton4.Top + 300
+    CommandButton5.Top = CommandButton5.Top + 300
+    ListBox1.Clear
+    TextBox1.Text = ""
+    TextBox1.SetFocus
+  End If
+End Sub
+
+Private Sub CheckBox1_Enter()
+  If CheckBox1.Value = False Then
+    Application.SendKeys Chr(32)
+  End If
+End Sub
+
+Private Sub CheckBox2_Click()
+  If CheckBox2.Value = True Then
+    ActiveCell.Interior.ColorIndex = 6
+  Else
+    ActiveCell.Interior.ColorIndex = 0
+  End If
+End Sub
+
+Private Sub ComboBox1_Click()
+  Application.StatusBar = Trim(ComboBox1.List(ComboBox1.ListIndex))
+  ComboBox1.Text = Trim(ComboBox1.List(ComboBox1.ListIndex))
+  TextBox4.Text = Trim(Right(Trim(ComboBox1.Text), 5))
+End Sub
+
+Private Sub ComboBox2_Click()
+  TextBox5.Text = Trim(ComboBox2.Text)
+End Sub
+
+Private Sub ComboBox3_Click()
+  TextBox3.Text = Left(ComboBox3.Text, 8)
+  'TextBox2.Text = Mid(ComboBox3.Text, 10)
+End Sub
+
+Private Sub ComboBox3_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  Label15.Caption = "Trabajando..."
+  DoEvents
+  
+  Dim f As String
+  
+  On Error Resume Next
+  f = WebBrowser2.Document.Body.InnerText
+
+  For n = 1 To Len(f)
+    
+    If Mid(f, n, 9) = "<NmbItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</NmbItem>" Then z2 = n
+    If z2 > 0 Then
+      b = b & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+    If Mid(f, n, 9) = "<DscItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</DscItem>" Then z2 = n
+    If z2 > 0 Then
+      b = b & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+  
+    'If Mid(f, n, 14) = "<TpoDocRef>801" Then TextBox4.Text = Mid(f, n + 37, 26)
+  
+  Next
+  'TextBox2.Text = Trim(Left(b, Len(b) - 1))
+  Label15.Caption = ""
+  Exit Sub
+
+End Sub
+
+Private Sub CommandButton2_Click()
+  
+  TextBox4.Text = ""
+  Sheets("SII").Activate
+  For n = 2 To 15000
+    ActiveCell.Offset(1, 0).Activate
+    DoEvents
+    If ActiveCell.RowHeight > 0 = True Then Exit For
+  Next
+
+  TextBox1.Text = Cells(ActiveCell.Row, 6)
+  DoEvents
+  TextBox1.SetFocus
+  Application.SendKeys "{DOWN}", 1
+  DoEvents
+  Application.SendKeys "{ENTER}", 1
+  DoEvents
+
+  'For n = 1 To 15000
+  '  If Trim(Replace(Sheets("Acepta").Cells(n, 4), ".", "")) = Sheets("SII").Cells(ActiveCell.Row, 4) Then
+  '    If Sheets("Acepta").Cells(n, 3) = Sheets("SII").Cells(ActiveCell.Row, 6) Then
+  '      If Sheets("Acepta").Cells(n, 1) = ListBox1.List(ListBox1.ListIndex, 6) Then
+  '        Me.Height = 700
+  '        'WebBrowser1.Navigate Sheets("Acepta").Cells(n, 18)
+  '        ComboBox3.SetFocus
+  '        Exit For
+  '      End If
+  '    End If
+  '  End If
+  'Next
+  If CheckBox3.Value = True Then ComboBox3.DropDown
+  ComboBox3.SetFocus
+  
+  Label15.Caption = "Trabajando..."
+  DoEvents
+  
+  Dim f As String
+  
+  On Error Resume Next
+  f = WebBrowser2.Document.Body.InnerText
+  oc1 = 0
+  oc2 = 0
+  oc3 = 0
+  'TextBox4.Text = ""
+  For n = 1 To Len(f)
+    
+    If Mid(f, n, 9) = "<NmbItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</NmbItem>" Then z2 = n
+    If z2 > 0 Then
+      b = b & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+    If Mid(f, n, 9) = "<DscItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</DscItem>" Then z2 = n
+    If z2 > 0 Then
+      b = Trim(b) & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+    
+    If Mid(f, n, 14) = "<TpoDocRef>801" Then oc1 = 1
+    If Mid(f, n, 10) = "<FolioRef>" And oc1 > 0 Then oc2 = n + 10
+    If Mid(f, n, 11) = "</FolioRef>" And oc2 > 0 Then
+      'MsgBox oc1 & " - " & oc2 & " - " & n
+      'MsgBox Mid(f, oc2, n - oc2)
+      TextBox4.Text = Mid(f, oc2, n - oc2)
+      oc1 = 0
+      oc2 = 0
+    End If
+    
+    If Mid(f, n, 10) = "<FmaPago>1" Then
+      b = "CAJA - " & b
+      MsgBox "Pago Contado" & Space(10), vbInformation, "JCV"
+    End If
+    
+  Next
+  TextBox2.Text = Trim(Left(b, Len(b) - 1))
+  Label15.Caption = ""
+  Exit Sub
+  
+End Sub
+
+Private Sub CommandButton3_Click()
+  Depurar
+End Sub
+
+Private Sub CommandButton4_Click()
+    
+  Application.Visible = True
+  Application.ScreenUpdating = False
+  
+  Label15.Caption = "Trabajando..."
+  DoEvents
+  Workbooks("Depurar.xls").Activate
+  Sheets("SII").Activate
+  Range("A1:AD15000").ClearContents
+  DoEvents
+  Application.Workbooks.Open ThisWorkbook.Path & "\SII1.xls"
+  Workbooks("SII1.xls").Activate
+  Range("A1:AA15000").Select
+  Selection.Copy
+  Workbooks("Depurar.xls").Activate
+  Sheets("SII").Activate
+  Cells(1, 1).Select
+  ActiveSheet.Paste
+  Application.DisplayAlerts = False
+  Workbooks("SII1.xls").Close
+  Application.DisplayAlerts = False
+  Range("A15000").Select
+  Range(Selection, Selection.End(xlUp)).Select
+  ActiveCell.Offset(1, 0).Activate
+  b = ActiveCell.Row
+  Application.Workbooks.Open ThisWorkbook.Path & "\SII2.xls"
+  Workbooks("SII2.xls").Activate
+  Cells(1, 9).Select
+  Selection.EntireColumn.Insert
+  Cells(1, 22).Select
+  Selection.EntireColumn.Insert
+  Selection.EntireColumn.Insert
+  Selection.EntireColumn.Insert
+  Cells(1, 1).Activate
+  If Cells(2, 1).Value <> "" Then
+    Range("A1:AA15000").Select
+    Selection.Copy
+    Workbooks("Depurar.xls").Activate
+    Sheets("SII").Activate
+    Cells(b, 1).Select
+    ActiveSheet.Paste
+    Selection.Font.Color = vbRed
+  End If
+  Application.DisplayAlerts = False
+  Workbooks("SII2.xls").Close
+  Application.DisplayAlerts = True
+  Cells(1, 1).Select
+  Label15.Caption = ""
+ 
+  Application.ScreenUpdating = True
+  'MsgBox "Datos Cargados Exitosamente" & Space(8), vbInformation, "Dpto. Proveedores"
+  
+
+End Sub
+
+Private Sub CommandButton5_Click()
+  
+  Application.ScreenUpdating = False
+  
+  Label15.Caption = "Trabajando..."
+  DoEvents
+  Workbooks("Depurar.xls").Activate
+  Sheets("Libro").Activate
+  Range("A1:AD15000").ClearContents
+  Cells(1, 1).Select
+  Application.Workbooks.Open ThisWorkbook.Path & "\Libro1.xls"
+  Workbooks("Libro1.xls").Activate
+  Range(Selection, Selection.End(xlDown)).Select
+  Range(Selection, Selection.End(xlToRight)).Select
+  Selection.Copy
+  Workbooks("Depurar.xls").Activate
+  Sheets("Libro").Activate
+  Cells(1, 1).Select
+  ActiveSheet.Paste
+  Selection.Font.Color = vbRed
+  Application.DisplayAlerts = False
+  Workbooks("Libro1.xls").Close
+  Application.DisplayAlerts = True
+  Selection.End(xlDown).Select
+  ActiveCell.Offset(1, 0).Activate
+
+  Application.Workbooks.Open ThisWorkbook.Path & "\Libro2.xls"
+  Workbooks("Libro2.xls").Activate
+  Range(Selection, Selection.End(xlDown)).Select
+  Range(Selection, Selection.End(xlToRight)).Select
+  Selection.Copy
+  Workbooks("Depurar.xls").Activate
+  Sheets("Libro").Activate
+  ActiveSheet.Paste
+  Application.DisplayAlerts = False
+  Workbooks("Libro2.xls").Close
+  Application.DisplayAlerts = True
+  Sheets("SII").Activate
+  Cells(1, 1).Select
+ 
+  Application.ScreenUpdating = True
+  
+  Label15.Caption = ""
+  DoEvents
+  
+  'MsgBox "Datos Cargados Exitosamente" & Space(8), vbInformation, "Dpto. Proveedores"
+
+End Sub
+
+Private Sub CommandButton6_Click()
+  End
+End Sub
+
+Private Sub Label10_Click()
+  AppActivate "Documentos de Proveedores ver 8.2", 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  Application.SendKeys "{down}", 1
+End Sub
+
+Private Sub Label11_Click()
+  AppActivate "Documentos de Proveedores ver 8.2", 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  Application.SendKeys "{down}", 1
+End Sub
+
+Private Sub Label12_Click()
+  AppActivate "Formular Consulta", 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  Application.SendKeys Label13.Caption, 1
+  Exit Sub
+  Application.SendKeys "%{TAB}", 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  Application.SendKeys "{TAB}", 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  Application.SendKeys "{TAB}", 1
+End Sub
+
+Private Sub Label14_Click()
+  On Error Resume Next
+  Shell "C:\Documents and Settings\pullman\Escritorio\EncDes.exe"
+End Sub
+
+Private Sub Label19_Click()
+  Application.ScreenUpdating = False
+  Sheets("CI").Activate
+  Cells(1, 1).Activate
+  Selection.End(xlDown).Select
+  ActiveCell.Offset(1, 0).Activate
+  Cells(ActiveCell.Row, 1) = Label4.Caption
+  Cells(ActiveCell.Row, 2) = TextBox3.Text
+  For n = 1 To 3000
+    If Sheets("Cuentas").Cells(n, 1) = TextBox3.Text Then
+      Cells(ActiveCell.Row, 3) = Sheets("Cuentas").Cells(n, 2)
+      Exit For
+    End If
+  Next
+  Application.ScreenUpdating = True
+End Sub
+
+Private Sub Label19_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
+    Label16.Caption = "D"
+    'Application.SendKeys "%{TAB}", 1
+    AppActivate "Documentos de Proveedores ver 8.2", 1
+    'For n = 1 To 5000
+    '  DoEvents
+    'Next
+    Application.SendKeys TextBox3.Value, 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys "{down}", 1
+    Exit Sub
+End Sub
+
+Private Sub Label20_Click()
+  Label15.Caption = "Trabajando..."
+  DoEvents
+  
+  Dim f As String
+  
+  f = WebBrowser2.Document.Body.InnerText
+  For n = 1 To Len(f)
+    
+    If Mid(f, n, 9) = "<NmbItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</NmbItem>" Then z2 = n
+    If z2 > 0 Then
+      b = b & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+    If Mid(f, n, 9) = "<DscItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</DscItem>" Then z2 = n
+    If z2 > 0 Then
+      b = b & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+  
+    If Mid(f, n, 14) = "<TpoDocRef>801" Then
+      'TextBox4.Text = Mid(f, n + 38, 4)
+    End If
+  
+  Next
+  On Error Resume Next
+  TextBox2.Text = ""
+  TextBox2.Text = Trim(Left(b, Len(b) - 1))
+  Label15.Caption = ""
+  Exit Sub
+  
+  'DoEvents
+  'TextBox6.SetFocus
+  'DoEvents
+  'Sheets("Hoja1").Activate
+  'Range("A1:A10000").ClearContents
+  'Cells(1, 1).Select
+  'TextBox6.SelStart = 0
+  'TextBox6.SelLength = Len(TextBox6.Text)
+  'Application.SendKeys "^{c}", 1
+  'DoEvents
+  'SendKeys "%{TAB}", 1
+  'For n = 1 To 1000
+  '  DoEvents
+  'Next
+  'ActiveCell.PasteSpecial
+  'Sheets("SII").Activate
+  'a = ""
+  'b = ""
+  'TextBox4.Text = ""
+  'For n = 1 To 1000
+  '  On Error Resume Next
+  '  If Left(Trim(Sheets("Hoja1").Cells(n, 1)), 9) = "<NmbItem>" Then
+  '    a = Replace(Sheets("Hoja1").Cells(n, 1), "<NmbItem>", "")
+  '    b = b & Trim(Replace(a, "</NmbItem>", "")) & "; "
+  '  End If
+  '  If Left(Trim(Sheets("Hoja1").Cells(n, 1)), 9) = "<DscItem>" Then
+  '    a = Replace(Sheets("Hoja1").Cells(n, 1), "<DscItem>", "")
+  '    b = b & Trim(Replace(a, "</DscItem>", "")) & "; "
+  '  End If
+  '  If Trim(Sheets("Hoja1").Cells(n, 1)) = "<TpoDocRef>801</TpoDocRef>" Then
+  '    TextBox4.Text = Replace(Trim(Sheets("Hoja1").Cells(n + 1, 1)), "<FolioRef>", "")
+  '    DoEvents
+  '    TextBox4.Text = Replace(TextBox4.Text, "</FolioRef>", "")
+  '  End If
+  'Next
+  'TextBox2.Text = b
+End Sub
+
+Private Sub Label21_Click()
+  AppActivate "Formular Consulta", 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  Application.SendKeys TextBox4.Text, 1
+  For n = 1 To 5000
+    DoEvents
+  Next
+  'AppActivate "Formular Consulta", 1
+  Application.SendKeys "{TAB}", 1
+  For n = 1 To 5000
+    DoEvents
+  Next
+  Application.SendKeys vbKeyReturn, 1
+End Sub
+
+Private Sub Label23_Click()
+  'Exit Sub
+  If Me.Height = 124 Then
+    Me.Height = 250.75
+  Else
+    If ActiveSheet.Name <> "Cuentas" Then Me.Height = 124
+  End If
+  Application.Visible = True
+  Sheets("Libro").Activate
+  ActiveSheet.Range("$A$1:$L$15000").AutoFilter Field:=4, Criteria1:="=*" & TextBox1.Text & "*", Operator:=xlAnd
+End Sub
+
+Private Sub ComboBox1_DropButtonClick()
+  Exit Sub
+  ComboBox1.Clear
+  ComboBox1.Text = ""
+  For n = 1 To 10000
+    If Sheets("OC").Cells(n, 1) = "" Then Exit For
+    If Sheets("OC").Cells(n, 2) = Label4.Caption Then
+      ComboBox1.AddItem Sheets("OC").Cells(n, 12) & " - " & Sheets("OC").Cells(n, 1) & Space(10)
+      If Sheets("OC").Cells(n, 12) = Val(Label6.Caption) + Val(Label7.Caption) + Val(Label18.Caption) Then
+        If ComboBox1.Text = "" Then
+          ComboBox1.Text = Sheets("OC").Cells(n, 12) & " - " & Sheets("OC").Cells(n, 1) & Space(10)
+        End If
+      End If
+    End If
+  Next
+End Sub
+
+Private Sub ComboBox2_DropButtonClick()
+  'ComboBox2.Clear
+  'For n = 1 To 10000
+  '  If Sheets("CC").Cells(n, 1) = "" Then Exit For
+  '  If Sheets("CC").Cells(n, 12) = Label4.Caption Then
+  '    ComboBox2.AddItem Sheets("CC").Cells(n, 30)
+  '  End If
+  'Next
+End Sub
+
+Private Sub Label23_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  If Button = 2 Then Sheets("SII").Range("$A$1:$Z$457").AutoFilter Field:=5, Criteria1:="=*copec*" _
+        , Operator:=xlOr, Criteria2:="=*tos ch*"
+End Sub
+
+Private Sub Label24_Click()
+'On Error Resume Next
+  'WebBrowser1.ExecWB OLECMDID_PRINT, OLECMDEXECOPT_DONTPROMPTUSER
+  For n = 1 To 5000
+    DoEvents
+  Next
+  'Application.SendKeys "{ENTER}", 1
+End Sub
+
+Private Sub Label4_Click()
+  'WebBrowser1.ExecWB 6, OLECMDEXECOPT_PROMPTUSER
+  WebBrowser1.SetFocus
+  Application.SendKeys "^{P}", 1
+  Label16.Caption = ""
+  If Label4.Caption = "" Then Exit Sub
+  Set MyData = New DataObject
+  MyData.SetText Label4.Caption
+  MyData.PutInClipboard
+  'Application.SendKeys "%{TAB}", 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  If Label14.Caption <> 61 Then
+    AppActivate "Documentos de Proveedores ver 8.2", 1
+  Else
+    AppActivate "Notas de Cr?dito ver 7.1 PID: [1040]", 1
+  End If
+  For n = 1 To 5000
+    DoEvents
+  Next
+  Application.SendKeys Label4.Caption, 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  If Label14.Caption = 61 Then Exit Sub
+  Application.SendKeys "{TAB}", 1
+  For n = 1 To 5000
+    DoEvents
+  Next
+  Application.SendKeys "2018", 1
+  Application.SendKeys "{TAB}", 1
+  For n = 1 To 5000
+    DoEvents
+  Next
+  Application.SendKeys "03", 1
+  For n = 1 To 2500
+    DoEvents
+  Next
+  Application.SendKeys "{TAB}", 1
+  Application.SendKeys "{TAB}", 1
+End Sub
+Private Sub Label5_Click()
+  If Label5.Caption = "" Then Exit Sub
+    Set MyData = New DataObject
+    MyData.SetText Label5.Caption
+    MyData.PutInClipboard
+    'Application.SendKeys "%{TAB}", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    If Label14.Caption <> 61 Then
+      AppActivate "Documentos de Proveedores ver 8.2", 1
+    Else
+      AppActivate "Notas de Cr?dito ver 7.1 PID: [1040]", 1
+    End If
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys Label5.Caption, 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    If Label14.Caption = 61 Then Exit Sub
+  
+    DoEvents
+
+    If TextBox4.Value = "" Then
+      For n = 1 To 3
+        Application.SendKeys "{TAB}", 1
+        For m = 1 To 250
+          DoEvents
+        Next
+      Next
+      If Val(Label6.Caption) = 0 Then Application.SendKeys "{TAB}", 1
+      DoEvents
+    Else
+      For n = 1 To 1000
+        DoEvents
+      Next
+      If Label14.Caption = 61 Then Exit Sub
+      For n = 1 To 10
+        Application.SendKeys "{TAB}", 1
+        For m = 1 To 250
+          DoEvents
+        Next
+      Next
+      DoEvents
+    End If
+
+End Sub
+Private Sub Label6_Click()
+  If Label6.Caption = "" Then Exit Sub
+  Set MyData = New DataObject
+  MyData.SetText Label6.Caption
+  MyData.PutInClipboard
+  'Application.SendKeys "%{TAB}", 1
+  AppActivate "Documentos de Proveedores ver 8.2", 1
+  'For n = 1 To 1000
+  '  DoEvents
+  'Next
+  Application.SendKeys Label6.Caption, 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  If Label14.Caption = 61 Or Label16 = "D" Then Exit Sub
+  If Val(Label7.Caption) > 0 Then
+    Application.SendKeys "{TAB}", 1
+  Else
+    For n = 1 To 3
+      Application.SendKeys "{TAB}", 1
+    Next
+  End If
+End Sub
+
+Private Sub Label7_Click()
+  If Label7.Caption = "" Then Exit Sub
+  Set MyData = New DataObject
+  MyData.SetText Label7.Caption
+  MyData.PutInClipboard
+  'Application.SendKeys "%{TAB}", 1
+  AppActivate "Documentos de Proveedores ver 8.2", 1
+  'For n = 1 To 5000
+  '  DoEvents
+  'Next
+  Application.SendKeys Label7.Caption, 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  If Label14.Caption = 61 Then Exit Sub
+  If Val(Label6.Caption) > 0 Then
+    Application.SendKeys "{TAB}", 1
+  Else
+    For n = 1 To 20
+      Application.SendKeys "{TAB}", 1
+      For m = 1 To 250
+        DoEvents
+      Next
+    Next
+    Application.SendKeys "FR", 1
+    For n = 1 To 19
+      Application.SendKeys "{TAB}", 1
+      For m = 1 To 250
+        DoEvents
+      Next
+    Next
+  End If
+
+End Sub
+
+Private Sub Label13_Click()
+  If Label13.Caption = "" Then Exit Sub
+  Set MyData = New DataObject
+  MyData.SetText Label13.Caption
+  MyData.PutInClipboard
+  'Application.SendKeys "%{TAB}", 1
+  AppActivate "Documentos de Proveedores ver 8.2", 1
+  'For n = 1 To 5000
+  '  DoEvents
+  'Next
+  Application.SendKeys Label13.Caption, 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  If Label14.Caption = 61 Then Exit Sub
+  For n = 1 To 2
+    Application.SendKeys "{TAB}", 1
+  Next
+  
+  Handle = FindWindow(vbNullString, "Documentos de Proveedores ver 8.2")
+    Call ShowWindow(Handle, SW_HIDE)
+  Me.Show
+  Me.Top = 5
+  Me.Left = 5
+  'MsgBox "Ingresar Orden de Compra y Centro de Costo ", vbExclamation, "Dpto. Proveedores"
+  Handle = FindWindow(vbNullString, "Documentos de Proveedores ver 8.2")
+    Call ShowWindow(Handle, SW_NORMAL)
+  
+End Sub
+
+Private Sub Label18_Click()
+  If Label6.Caption = "" Then Exit Sub
+  Set MyData = New DataObject
+  MyData.SetText Label6.Caption
+  MyData.PutInClipboard
+  'Application.SendKeys "%{TAB}", 1
+  AppActivate "Documentos de Proveedores ver 8.2", 1
+  'For n = 1 To 5000
+  '  DoEvents
+  'Next
+  Application.SendKeys Label18.Caption, 1
+  For n = 1 To 1000
+    DoEvents
+  Next
+  
+  If Label14.Caption = 61 Or Label16 = "D" Then Exit Sub
+  
+  If Label14.Caption = 56 Then
+    For n = 1 To 18 '7
+      Application.SendKeys "{TAB}", 1
+      For m = 1 To 250
+        DoEvents
+      Next
+    Next
+    Application.SendKeys "ND", 1
+    For m = 1 To 1000
+      DoEvents
+    Next
+    For n = 1 To 21
+      Application.SendKeys "{TAB}", 1
+      For m = 1 To 250
+        DoEvents
+      Next
+    Next
+  End If
+  
+  If TextBox4.Text = "" Then
+    For n = 1 To 6
+      Application.SendKeys "{TAB}", 1
+    Next
+  Else
+    For n = 1 To 6
+      Application.SendKeys "{TAB}", 1
+    Next
+  End If
+  
+  'If Label14.Caption = 34 Or Label14.Caption = 56 Then
+  '  Handle = FindWindow(vbNullString, "Documentos de Proveedores ver 8.2")
+  '  Call ShowWindow(Handle, SW_HIDE)
+  '  MsgBox "Verificar Tipo de Ddocumento", vbExclamation, "Dpto. Proveedores"
+  '  Handle = FindWindow(vbNullString, "Documentos de Proveedores ver 8.2")
+  '  Call ShowWindow(Handle, SW_NORMAL)
+  'End If
+  
+  
+End Sub
+
+Private Sub Label8_Click()
+  On Error Resume Next
+  AppActivate "Formular Consulta", 1
+  For n = 1 To 100
+    DoEvents
+  Next
+  Application.SendKeys Label4.Caption, 1
+End Sub
+
+Private Sub Label9_Click()
+  WebBrowser1.ExecWB OLECMDID_PRINT, OLECMDEXECOPT_DONTPROMPTUSER
+End Sub
+
+Private Sub Label9_MouseDown(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  Label9.BackColor = vbRed
+End Sub
+
+Private Sub Label9_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  Label9.BackColor = Me.BackColor
+End Sub
+
+Private Sub ListBox1_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+  If ListBox1.ListIndex = -1 And ListBox1.ListCount > 0 Then ListBox1.ListIndex = 0
+  If KeyCode = 27 Then Me.Hide
+  If KeyCode = 13 Then
+    If ListBox1.ListIndex = -1 Then ListBox1.ListIndex = 0
+    If CheckBox1.Value = True Then
+      TextBox3.Text = Left(ListBox1.List(ListBox1.ListIndex, 2), 8)
+      TextBox2.Text = Mid(ListBox1.List(ListBox1.ListIndex, 2), 10)
+      CheckBox1.Value = False
+      TextBox2.SetFocus
+    Else
+      SendKeys "{TAB}"
+    End If
+  End If
+End Sub
+
+Private Sub ListBox1_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+  On Error Resume Next
+  If KeyCode = 39 Then
+    TextBox4.SetFocus
+    Exit Sub
+  End If
+  If ListBox1.ListIndex = -1 Then ListBox1.ListIndex = 0
+  If CheckBox1.Value = True Then Exit Sub
+  
+  Label4.Caption = ListBox1.List(ListBox1.ListIndex, 1)
+  Label5.Caption = ListBox1.List(ListBox1.ListIndex, 4)
+  Label6.Caption = ListBox1.List(ListBox1.ListIndex, 5)
+  Label7.Caption = ListBox1.List(ListBox1.ListIndex, 7)
+  Label13.Caption = ListBox1.List(ListBox1.ListIndex, 0)
+  Label14.Caption = ListBox1.List(ListBox1.ListIndex, 6)
+  Label18.Caption = ListBox1.List(ListBox1.ListIndex, 8)
+  TextBox4.Text = ""
+  TextBox5.Text = ""
+    
+    
+  ComboBox1.Clear
+  ComboBox1.Text = ""
+  ComboBox2.Clear
+  ComboBox2.Text = ""
+  ComboBox3.Clear
+  ComboBox3.Text = ""
+  
+  For n = 1 To 10000
+    'If Sheets("OC").Cells(n, 1) = "" Then Exit For
+    If Sheets("OC").Cells(n, 2) = Label4.Caption Then
+      ComboBox1.AddItem Sheets("OC").Cells(n, 12) & " - " & Sheets("OC").Cells(n, 1) & Space(10)
+      If Sheets("OC").Cells(n, 12) = Val(Label6.Caption) + Val(Label7.Caption) + Val(Label18.Caption) Then
+        If ComboBox1.Text = "" Then
+          ComboBox1.Text = Sheets("OC").Cells(n, 1) ' & " - " & Sheets("OC").Cells(n, 1) & Space(10)
+          TextBox4.Text = ComboBox1.Text
+          TextBox5.Text = Sheets("OC").Cells(n, 13)
+        End If
+      End If
+      If Sheets("OC").Cells(n, 4) = Label13.Caption Then
+        If Sheets("OC").Cells(n, 2) = Label4.Caption Then
+          'ComboBox1.Text = Sheets("OC").Cells(n, 1)
+          TextBox4.Text = Sheets("OC").Cells(n, 1)
+          'TextBox5.Text = Sheets("OC").Cells(n, 4)
+        End If
+      End If
+    End If
+    'If Sheets("CC").Cells(n, 4) = Label4.Caption And Sheets("CC").Cells(n, 3) = Label13.Caption Then
+    '  ComboBox2.AddItem Sheets("CC").Cells(n, 2) & Space(10)
+    '  ComboBox2.Text = Sheets("CC").Cells(n, 2)
+    '  TextBox5.Text = Sheets("CC").Cells(n, 2)
+    'End If
+    'If CheckBox2.Value = True Then
+    If Sheets("CI").Cells(n, 1) = Label4.Caption Then
+      ComboBox3.AddItem Sheets("CI").Cells(n, 2) & "  " & Sheets("CI").Cells(n, 3) & Space(8)
+      ComboBox3.Text = Sheets("CI").Cells(n, 2) & "  " & Sheets("CI").Cells(n, 3) & Space(8)
+      TextBox3.Text = Left(ComboBox3.Text, 8)
+    End If
+    'End If
+  Next
+  
+  'If ComboBox2.ListCount > 1 Then MsgBox "Verificar centros de costo ", vbExclamation, "Departamento de Proveedores"
+  If ComboBox1.ListCount > 0 Then
+    ComboBox1.Text = "Ver"
+  'Else
+  '  ComboBox1.BackColor = vbWhite
+  End If
+  If ComboBox3.ListCount > 1 Then
+    ComboBox3.SetFocus
+    'SendKeys "%{DOWN}", 1
+    If CheckBox3.Value = True Then ComboBox3.DropDown
+    DoEvents
+    ListBox1.SetFocus
+    If CheckBox3.Value = True Then ComboBox3.DropDown
+  Else
+    ComboBox3.SetFocus
+    SendKeys "{TAB}", 1
+    DoEvents
+    ListBox1.SetFocus
+  End If
+    
+  
+  If ListBox1.List(ListBox1.ListIndex, 9) <> "" Then
+    Dim s1 As String
+    s = Split(ListBox1.List(ListBox1.ListIndex, 9), "|")
+    'TextBox5.Text = ListBox1.List(ListBox1.ListIndex, 9)
+    'On Error Resume Next
+    If Val(s(1)) > 0 Then TextBox4.Text = s(1)
+    If Val(s(0)) > 0 Then TextBox5.Text = s(0)
+  End If
+  
+  If ListBox1.List(ListBox1.ListIndex, 6) = 61 Then
+    Label4.ForeColor = vbRed
+    Label5.ForeColor = vbRed
+    Label6.ForeColor = vbRed
+    Label7.ForeColor = vbRed
+    Label13.ForeColor = vbRed
+    Label18.ForeColor = vbRed
+  ElseIf ListBox1.List(ListBox1.ListIndex, 6) = 34 Then
+    Label4.ForeColor = vbBlue
+    Label5.ForeColor = vbBlue
+    Label6.ForeColor = vbBlue
+    Label7.ForeColor = vbBlue
+    Label13.ForeColor = vbBlue
+    Label18.ForeColor = vbBlue
+  ElseIf ListBox1.List(ListBox1.ListIndex, 6) = 56 Then
+    Label4.ForeColor = 32768
+    Label5.ForeColor = 32768
+    Label6.ForeColor = 32768
+    Label7.ForeColor = 32768
+    Label13.ForeColor = 32768
+    Label18.ForeColor = 32768
+  Else
+    Label4.ForeColor = vbBlack
+    Label5.ForeColor = vbBlack
+    Label6.ForeColor = vbBlack
+    Label7.ForeColor = vbBlack
+    Label13.ForeColor = vbBlack
+    Label18.ForeColor = vbBlack
+  End If
+  WebBrowser1.Navigate "about:blank"
+  WebBrowser2.Navigate "about:blank"
+  For n = 1 To 5000
+    If Trim(Replace(Sheets("Acepta").Cells(n, 4), ".", "")) = Label4.Caption Then
+      If Sheets("Acepta").Cells(n, 3) = Label13.Caption Then
+        If Sheets("Acepta").Cells(n, 1) = Val(ListBox1.List(ListBox1.ListIndex, 6)) Then
+          Me.Height = 700
+          
+          If Mid(ThisWorkbook.Path, 28, 1) = "A" Then
+            WebBrowser1.Navigate "http://webdte1803.acepta.com/ca4webv3/HtmlView?url=http%3A%2F%2Fwebdte1803.acepta.com%2Fv01%2F" & Mid(Sheets("Acepta").Cells(n, 18), 34)
+            WebBrowser2.Navigate "http://webdte1803.acepta.com/ca4webv3/XmlView?url=http%3A%2F%2Fwebdte1803.acepta.com%2Fv01%2F" & Mid(Sheets("Acepta").Cells(n, 18), 34)
+          ElseIf Mid(ThisWorkbook.Path, 28, 1) = "s" Then
+            WebBrowser1.Navigate "http://tandem1803.acepta.com/ca4webv3/HtmlView?url=http%3A%2F%2Ftandem1803.acepta.com%2Fv01%2F" & Mid(Sheets("Acepta").Cells(n, 18), 34)
+            WebBrowser2.Navigate "http://tandem1803.acepta.com/ca4webv3/XmlView?url=http%3A%2F%2Ftandem1803.acepta.com%2Fv01%2F" & Mid(Sheets("Acepta").Cells(n, 18), 34)
+          ElseIf Mid(ThisWorkbook.Path, 28, 1) = "F" Then
+            WebBrowser1.Navigate "http://fariasybeltran1803.acepta.com/ca4webv3/HtmlView?url=http%3A%2F%2Ffariasybeltran1803.acepta.com%2Fv01%2F" & Mid(Sheets("Acepta").Cells(n, 18), 42)
+            WebBrowser2.Navigate "http://fariasybeltran1803.acepta.com/ca4webv3/XmlView?url=http%3A%2F%2Ffariasybeltran1803.acepta.com%2Fv01%2F" & Mid(Sheets("Acepta").Cells(n, 18), 42)
+          End If
+                                
+          Label24.Caption = n
+          DoEvents
+          Exit For
+        End If
+      End If
+    End If
+  Next
+  
+  If Frame1.Caption = "FARIAS Y BELTRAN" Then
+    If Label4.Caption = "99520000-7" And Label7.Caption = "0" Then
+      TextBox3.Text = "10803-00"
+      ComboBox3.Text = ""
+    End If
+  End If
+  
+  Exit Sub
+End Sub
+Private Sub WebBrowser1_DocumentComplete(ByVal pDisp As Object, URL As Variant)
+  If Label24.Caption = 0 Then Exit Sub
+  Me.Caption = WebBrowser1.LocationName
+  If Left(Me.Caption, 4) = "http" Then
+    If Mid(ThisWorkbook.Path, 28, 1) = "A" Then
+      WebBrowser1.Navigate "http://webdte1803.acepta.com/ca4webv3/PdfViewMedia?url=http%253A%252F%252Fwebdte1803.acepta.com%252Fv01%252F" & Mid(Sheets("Acepta").Cells(Val(Label24.Caption), 18), 34) & "#"
+    ElseIf Mid(ThisWorkbook.Path, 28, 1) = "s" Then
+      WebBrowser1.Navigate "http://tandem1803.acepta.com/ca4webv3/PdfViewMedia?url=http%253A%252F%252Ftandem1803.acepta.com%252Fv01%252F" & Mid(Sheets("Acepta").Cells(Val(Label24.Caption), 18), 34) & "#"
+    ElseIf Mid(ThisWorkbook.Path, 28, 1) = "F" Then
+      WebBrowser1.Navigate "http://fariasybeltran1803.acepta.com/ca4webv3/PdfViewMedia?url=http%253A%252F%252Ffariasybeltran1803.acepta.com%252Fv01%252F" & Mid(Sheets("Acepta").Cells(Val(Label24.Caption), 18), 40) & "#"
+    End If
+    Label24.Caption = 0
+    Exit Sub
+  End If
+End Sub
+Private Sub Label15_Click()
+  'Me.Height = 700
+    On Error Resume Next
+    If Mid(ThisWorkbook.Path, 28, 1) = "A" Then
+      WebBrowser1.Navigate "http://webdte1803.acepta.com/ca4webv3/PdfViewMedia?url=http%253A%252F%252Fwebdte1803.acepta.com%252Fv01%252F" & Mid(Sheets("Acepta").Cells(Val(Label24.Caption), 18), 34) & "#"
+    ElseIf Mid(ThisWorkbook.Path, 28, 1) = "s" Then
+      WebBrowser1.Navigate "http://tandem1803.acepta.com/ca4webv3/PdfViewMedia?url=http%253A%252F%252Ftandem1803.acepta.com%252Fv01%252F" & Mid(Sheets("Acepta").Cells(Val(Label24.Caption), 18), 34) & "#"
+    ElseIf Mid(ThisWorkbook.Path, 28, 1) = "F" Then
+      WebBrowser1.Navigate "http://fariasybeltran1803.acepta.com/ca4webv3/PdfViewMedia?url=http%253A%252F%252Ffariasybeltran1803.acepta.com%252Fv01%252F" & Mid(Sheets("Acepta").Cells(Val(Label24.Caption), 18), 40) & "#"
+    End If
+    Label24.Caption = 0
+End Sub
+
+Private Sub TextBox1_Change()
+  'Workbooks("Depurar").Activate
+  'If CheckBox1.Value = False Then TextBox4.Text = ""
+  'If CheckBox1.Value = False Then TextBox5.Text = ""
+  If CheckBox1.Value = False Then
+    ListBox1.ColumnWidths = "60;50;200;75;30;30;30"
+    Sheets("SII").Activate
+    i = 0
+    ListBox1.Clear
+    'If CheckBox1.Value = True Then
+      For n = 0 To 15000
+        If InStr(Cells(n + 2, 6), TextBox1.Value) > 0 Then
+          ListBox1.AddItem Cells(n + 2, 6).Value
+          ListBox1.List(i, 1) = Cells(n + 2, 4).Value
+          ListBox1.List(i, 2) = Cells(n + 2, 5).Value
+          ListBox1.List(i, 3) = Cells(n + 2, 15).Value
+          ListBox1.List(i, 4) = Cells(n + 2, 7).Value
+          ListBox1.List(i, 5) = Cells(n + 2, 11).Value
+          ListBox1.List(i, 6) = Cells(n + 2, 2).Value
+          ListBox1.List(i, 7) = Cells(n + 2, 10).Value + Cells(n + 2, 26).Value
+          ListBox1.List(i, 8) = Cells(n + 2, 12).Value
+          'ListBox1.List(i, 9) = Cells(n + 2, 16).Text & "|" & Cells(n + 2, 19).Text
+          i = i + 1
+        End If
+      Next
+  Else
+    '----------------------------------------------------------------------------------------
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    Dim MiMatriz(1 To 2500)
+    Dim j As Integer
+    Application.StatusBar = MiMatriz(1)
+    If MiMatriz(1) = "" Then
+      For n = 1 To 2500
+        If Len(Sheets("Cuentas").Cells(n, 1)) = 8 Then _
+          MiMatriz(n) = Sheets("Cuentas").Cells(n, 1).Value & "  " & Sheets("Cuentas").Cells(n, 2).Value
+      Next
+    End If
+    ListBox1.Clear
+    X = 0
+    For n = 1 To 2500
+      'MsgBox UCase(MiMatriz(n)) & " - " & UCase(TextBox1.Text)
+      If Len(TextBox1.Text) > 0 Then
+        If InStr(UCase(MiMatriz(n)), UCase(TextBox1.Text)) > 0 Then
+          ListBox1.AddItem MiMatriz(n)
+          ListBox1.List(X, 2) = MiMatriz(n)
+          X = X + 1
+        End If
+        DoEvents
+      End If
+    Next
+    Application.ScreenUpdating = True
+    Application.Calculation = xlCalculationAutomatic
+    Exit Sub
+    '----------------------------------------------------------------------------------------
+    
+    Application.ScreenUpdating = False
+    Application.Calculation = xlCalculationManual
+    ListBox1.ColumnWidths = "50;500"
+    Sheets("Cuentas").Activate
+    i = 0
+    ListBox1.Clear
+    'If CheckBox1.Value = True Then
+      For n = 0 To 3000
+        On Error Resume Next
+        If InStr(UCase(Cells(n + 2, 2)), UCase(TextBox1.Text)) > 0 _
+           Or InStr(UCase(Cells(n + 2, 1)), UCase(TextBox1.Text)) > 0 Then
+          If Mid(Cells(n + 2, 1), 6, 1) = "-" Then
+            ListBox1.AddItem Cells(n + 2, 1).Value
+            ListBox1.List(i, 1) = UCase(Cells(n + 2, 2).Value)
+          'ListBox1.List(i, 2) = Cells(n + 2, 2).Value
+          'ListBox1.List(i, 3) = Cells(n + 2, 15).Value
+          'ListBox1.List(i, 4) = Cells(n + 2, 7).Value
+          'ListBox1.List(i, 5) = Cells(n + 2, 11).Value
+          'ListBox1.List(i, 6) = Cells(n + 2, 2).Value
+          'ListBox1.List(i, 7) = Cells(n + 2, 10).Value + Cells(n + 2, 26).Value
+          i = i + 1
+          End If
+        End If
+      Next
+    Application.ScreenUpdating = tue
+    Application.Calculation = xlCalculationAutomatic
+  End If
+End Sub
+
+Private Sub TextBox1_Enter()
+  Application.SendKeys "{NUMLOCK}", True
+End Sub
+
+Private Sub TextBox1_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+  'Me.Caption = KeyCode
+  'If ActiveSheet.Name <> "Cuentas" Then Me.Height = 250.5
+  If KeyCode = 13 And CheckBox1.Value = False Then
+    i = 0
+    ListBox1.Clear
+    n = 0
+    For n = 0 To 15000
+      If Cells(n + 2, 6) = TextBox1.Text Then
+        ListBox1.AddItem Cells(n + 2, 6).Value
+        ListBox1.List(i, 1) = Cells(n + 2, 4).Value
+        ListBox1.List(i, 2) = Cells(n + 2, 5).Value
+        ListBox1.List(i, 3) = Cells(n + 2, 15).Value
+        ListBox1.List(i, 4) = Cells(n + 2, 7).Value
+        ListBox1.List(i, 5) = Cells(n + 2, 11).Value
+        ListBox1.List(i, 6) = Cells(n + 2, 2).Value
+        ListBox1.List(i, 7) = Cells(n + 2, 10).Value
+        ListBox1.List(i, 8) = Cells(n + 2, 12).Value
+        ListBox1.List(i, 9) = ""
+        i = i + 1
+      End If
+    Next
+    DoEvents
+    'ActiveSheet.Range("$A$1:$AA$5000").AutoFilter Field:=6, Criteria1:= _
+    "=" & TextBox1.Value & "", Operator:=xlAnd
+    'ActiveSheet.Range("$A$1:$AA$5000").AutoFilter Field:=4
+    'SendKeys "{TAB}"
+    TextBox1.SetFocus
+  End If
+  If KeyCode = 27 Then Me.Hide
+  If KeyCode = 107 Then
+    Me.Height = 124
+    TextBox1.Text = Replace(TextBox1.Text, "+", "")
+    Application.Visible = True
+    Sheets("Libro").Activate
+    ActiveSheet.Range("$A$1:$L$15000").AutoFilter Field:=4, Criteria1:="=*" & TextBox1.Text & "*", Operator:=xlAnd
+    DoEvents
+    TextBox1.SetFocus
+  End If
+End Sub
+
+Private Sub TextBox1_KeyUp(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+  'If KeyCode = 39 Then
+  '  TextBox1.Text = ""
+  '  Exit Sub
+  'End If
+  If KeyCode = 39 Then
+    For n = 1 To 1000
+      If Val(TextBox1.Text) = Sheets("SII").Cells(n, 6) Then
+        Sheets("SII").Cells(n, 6).Interior.Color = vbYellow
+        Exit For
+      End If
+    Next
+  End If
+End Sub
+
+Private Sub TextBox2_DblClick(ByVal Cancel As MSForms.ReturnBoolean)
+  TextBox2.SetFocus
+  TextBox2.Text = ""
+  DoEvents
+  Application.SendKeys TextBox2.Text, 1
+  DoEvents
+  Me.Height = 250.5
+End Sub
+
+Private Sub TextBox2_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  If Button = 2 Then
+    'Application.SendKeys "%{TAB}", 1
+    AppActivate "Documentos de Proveedores ver 8.2", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    TextBox2.Text = Replace(TextBox2.Text, "[", "")
+    TextBox2.Text = Replace(TextBox2.Text, "]", "")
+    DoEvents
+    Application.SendKeys Left(TextBox2.Text, 250), 1
+    'MsgBox Left(TextBox2.Text, 250), 1
+    For n = 1 To 2000
+      DoEvents
+    Next
+    Application.SendKeys "^{TAB}", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys "^{TAB}", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys "^{RIGHT}", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys "{TAB}", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    If Frame1.Caption = "FARIAS Y BELTRAN" Then Application.SendKeys "{DOWN}", 1
+    If TextBox4.Value = "" Then
+      Application.SendKeys "{DOWN}", 1
+      For n = 1 To 1000
+        DoEvents
+      Next
+    End If
+  End If
+End Sub
+
+Private Sub TextBox3_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  If Button = 2 Then
+    Label16.Caption = "D"
+    'Application.SendKeys "%{TAB}", 1
+    AppActivate "Documentos de Proveedores ver 8.2", 1
+    'For n = 1 To 5000
+    '  DoEvents
+    'Next
+    Application.SendKeys TextBox3.Value, 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    'Application.SendKeys "{down}", 1
+    'Exit Sub
+    For n = 1 To 5
+      Application.SendKeys "{TAB}", 1
+    Next
+  End If
+End Sub
+
+Private Sub TextBox4_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  If Button = 2 Then
+    'Application.SendKeys "%{TAB}", 1
+    AppActivate "Documentos de Proveedores ver 8.2", 1
+    'For n = 1 To 5000
+    '  DoEvents
+    'Next
+    Application.SendKeys TextBox4.Value, 1
+    For n = 1 To 9 '25
+      Application.SendKeys "{TAB}", 1
+      For m = 1 To 250
+        DoEvents
+      Next
+      If TextBox5.Value <> "" And n = 8 Then Exit For
+    Next
+  Else
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys "^{v}", 1
+  End If
+
+End Sub
+
+Private Sub TextBox5_KeyDown(ByVal KeyCode As MSForms.ReturnInteger, ByVal Shift As Integer)
+  If KeyCode = 13 Then
+    'Application.SendKeys "%{TAB}", 1
+    AppActivate "Documentos de Proveedores ver 8.2", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+  End If
+End Sub
+
+Private Sub TextBox5_MouseUp(ByVal Button As Integer, ByVal Shift As Integer, ByVal X As Single, ByVal Y As Single)
+  If Button = 2 Then
+    AppActivate "Documentos de Proveedores ver 8.2", 1
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys TextBox5.Value, 1
+    For n = 1 To 17
+      Application.SendKeys "{TAB}", 1
+      For m = 1 To 250
+        DoEvents
+      Next
+    Next
+  Else
+    For n = 1 To 1000
+      DoEvents
+    Next
+    Application.SendKeys "^{v}", 1
+  End If
+End Sub
+
+Private Sub UserForm_Activate()
+  Me.Top = 5
+  Me.Left = 5
+  TextBox1.SetFocus
+  TextBox1.SelStart = 0
+  TextBox1.SelLength = Len(TextBox1.Text)
+  If Mid(ThisWorkbook.Path, 28, 1) = "A" Then Frame1.Caption = "ATENEA"
+  If Mid(ThisWorkbook.Path, 28, 1) = "s" Then Frame1.Caption = "TANDEM"
+  If Mid(ThisWorkbook.Path, 28, 1) = "F" Then Frame1.Caption = "FARIAS Y BELTRAN"
+End Sub
+
+Private Sub UserForm_Click()
+  If Application.Visible = True Then
+    Application.Visible = False
+  Else
+    Application.Visible = True
+  End If
+End Sub
+
+Private Sub UserForm_Initialize()
+  'Cells(1, 2) = Cells(1, 1).Interior.Color
+  Me.Top = 5
+  Me.Left = 5
+  ListBox1.ColumnCount = 4
+  ListBox1.ColumnWidths = "60;50;200;75;30;30;30"
+  Me.Caption = "EMPRESAS PULLMAN - Departamento de Proveedores - Ingreso de Facturas"
+  TextBox1.TabIndex = 0
+  TextBox3.TabIndex = 1
+  TextBox2.TabIndex = 2
+  TextBox4.TabIndex = 3
+  TextBox5.TabIndex = 4
+End Sub
+
+Private Sub UserForm_QueryClose(Cancel As Integer, CloseMode As Integer)
+  If Application.Visible = False Then
+    Application.Visible = True
+    End
+    Exit Sub
+  End If
+  End
+End Sub
+
+Sub Plan()
+  If ActiveSheet.Name = "Plan" Then
+    ActiveSheet.Range("$A$2:$B$2000").AutoFilter Field:=2, Criteria1:="=*" & Cells(1, 2) & "*", Operator:=xlAnd
+  Else
+    ActiveCell.Copy
+  End If
+End Sub
+
+Sub Depurar()
+
+  Label15.Caption = "Trabajando..."
+  DoEvents
+  Application.ScreenUpdating = False
+  Cells(1, 1).Select
+  Application.SendKeys "{ESC}", 1
+  'Me.Hide
+  
+  Application.Calculation = xlCalculationAutomatic
+  
+  If ActiveSheet.FilterMode = True Then
+    Selection.AutoFilter
+    DoEvents
+  End If
+  
+  Sheets("Libro").Activate
+  Sheets("Libro").Cells(1, 13).FormulaLocal = _
+    "=concatenar(F1;D1;SI(C1=""FE"";33;SI(C1=""ND"";56;SI(C1=""FR"";34;SI(C1=""CE"";61;SI(C1=""FN"";34;"""")))));valor(L1);B1)"
+  Sheets("Libro").Cells(1, 14).FormulaLocal = _
+    "=SI(L1<>"""";BUSCARV(M1;SII!AB$1:AB$15000;1;FALSO);"""")"
+  Sheets("Libro").Range("M1:N15000").Select
+  MsgBox ""
+  Selection.FillDown
+  Selection.Copy
+  'Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+    :=False, Transpose:=False
+  Sheets("SII").Activate
+  Sheets("SII").Cells(1, 27).FormulaLocal = _
+    "=BUSCARV(CONCATENAR(D1;F1;B1;O1;texto(G1;""dd-mm-yyyy""));Libro!M$1:M$15000;1;FALSO)"
+  Sheets("SII").Cells(1, 28).FormulaLocal = _
+    "=CONCATENAR(D1;F1;B1;O1;texto(G1;""dd-mm-yyyy""))"
+  Sheets("SII").Range("AA1:AB15000").Select
+  Selection.FillDown
+  Selection.Copy
+'Exit Sub '------------------------------------------------------------------------
+  Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+    :=False, Transpose:=False
+  Selection.Replace What:="#N/A", Replacement:="", LookAt:=xlPart, _
+    SearchOrder:=xlByRows, MatchCase:=False, SearchFormat:=False, _
+    ReplaceFormat:=False
+  Range("A1").Select
+  
+  Sheets("Libro").Activate
+  Range("M1:N15000").Select
+  Selection.Copy
+  Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks _
+    :=False, Transpose:=False
+    Range(Selection, Cells(1)).Select
+    Selection.AutoFilter
+    ActiveSheet.Range("$A$1:$N$15000").AutoFilter Field:=12, Criteria1:=RGB(0, 0 _
+        , 0), Operator:=xlFilterFontColor
+    ActiveSheet.Range("$A$1:$N$15000").AutoFilter Field:=14, Criteria1:="#N/A"
+    Range(Selection, Selection.End(xlDown)).Select
+    Selection.SpecialCells(xlCellTypeVisible).Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Columns("A:A").Select
+    With Selection.Interior
+        .Pattern = xlNone
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    Range("A1").Select
+    Range(Selection, Selection.End(xlDown)).Select
+    Selection.SpecialCells(xlCellTypeVisible).Select
+    With Selection.Interior
+        .Pattern = xlSolid
+        .PatternColorIndex = xlAutomatic
+        .Color = 65535
+        .TintAndShade = 0
+        .PatternTintAndShade = 0
+    End With
+    Columns("M:N").Select
+    Selection.Delete Shift:=xlToLeft
+    ActiveSheet.Range("$A$1:$L$15000").AutoFilter Field:=1, Criteria1:=RGB(255, _
+        255, 0), Operator:=xlFilterCellColor
+    Cells(1, 12).FormulaLocal = "=SUBTOTALES(103;L2:L15000)"
+    Range("A1").Select
+  
+  Sheets("SII").Activate
+  For n = 1 To 15000
+    ActiveCell.Offset(1, 0).Activate
+    If Cells(ActiveCell.Row, 27) <> "" Then
+      Selection.EntireRow.Delete
+      Application.StatusBar = n
+      ActiveCell.Offset(-1, 0).Activate
+    End If
+  Next
+  
+  Sheets("Libro").Activate
+  Sheets("Libro").Range("M1:M15000").ClearContents
+  Sheets("Libro").Cells(1, 1).Activate
+  
+  Sheets("SII").Activate
+  Sheets("SII").Range("AA1:AD15000").ClearContents
+  Application.ScreenUpdating = True
+  Application.Calculation = xlCalculationAutomatic
+  Label15.Caption = ""
+  
+  Range("A1").Select
+  'MsgBox "Datos Depurados Exitosamente" & Space(8), vbInformation + vbOKOnly, "Dpto. Proveedores"
+  MsgBox "Inconsistencias en Libro: " & Sheets("Libro").Cells(1, 12) & Space(8), vbCritical, "Dpto. Proveedores"
+
+  If MsgBox("Cargar Plan de Cuentas ?" & Space(8), vbQuestion + vbOKCancel, "Dpto. Proveedores") = vbOK Then
+    Label15.Caption = "Trabajando..."
+    Application.ScreenUpdating = False
+    Sheets("Cuentas").Activate
+    Sheets("Cuentas").Cells(1, 1).FormulaLocal = "='" & ThisWorkbook.Path & "\[Plan.XLS]Plan'!A1"
+    Sheets("Cuentas").Cells(1, 2).FormulaLocal = "='" & ThisWorkbook.Path & "\[Plan.XLS]Plan'!B1"
+    Range("A1:B3000").Select
+    Selection.FillDown
+    Selection.Copy
+    Selection.PasteSpecial Paste:=xlPasteValues, Operation:=xlNone, SkipBlanks:=False, Transpose:=False
+    Sheets("SII").Activate
+    Label15.Caption = ""
+    Application.ScreenUpdating = True
+  End If
+  DoEvents
+
+End Sub
+
+Sub SII()
+  If Left(ActiveSheet.Name, 19) = "RCV_COMPRA_REGISTRO" Then
+    ActiveWorkbook.SaveAs Filename:= _
+      ThisWorkbook.Path & "\SII1.xls", FileFormat:=xlExcel8 _
+        , Password:="", WriteResPassword:="", ReadOnlyRecommended:=False, _
+        CreateBackup:=False
+  ElseIf Left(ActiveSheet.Name, 20) = "RCV_COMPRA_PENDIENTE" Then
+    ActiveWorkbook.SaveAs Filename:= _
+      ThisWorkbook.Path & "\SII2.xls", FileFormat:=xlExcel8 _
+        , Password:="", WriteResPassword:="", ReadOnlyRecommended:=False, _
+        CreateBackup:=False
+  End If
+End Sub
+
+Private Sub WebBrowser2_DocumentComplete(ByVal pDisp As Object, URL As Variant)
+  Dim f As String
+  
+  On Error Resume Next
+  f = WebBrowser2.Document.Body.InnerText
+  oc1 = 0
+  oc2 = 0
+  oc3 = 0
+  'TextBox4.Text = ""
+  For n = 1 To Len(f)
+    
+    If Mid(f, n, 9) = "<NmbItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</NmbItem>" Then z2 = n
+    If z2 > 0 Then
+      b = b & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+    If Mid(f, n, 9) = "<DscItem>" Then z1 = n + 9
+    If Mid(f, n, 10) = "</DscItem>" Then z2 = n
+    If z2 > 0 Then
+      b = Trim(b) & Mid(f, z1, z2 - z1) & "; "
+      z2 = 0
+    End If
+    
+    If Mid(f, n, 14) = "<TpoDocRef>801" Then oc1 = 1
+    If Mid(f, n, 10) = "<FolioRef>" And oc1 > 0 Then oc2 = n + 10
+    If Mid(f, n, 11) = "</FolioRef>" And oc2 > 0 Then
+      'MsgBox oc1 & " - " & oc2 & " - " & n
+      'MsgBox Mid(f, oc2, n - oc2)
+      TextBox4.Text = Mid(f, oc2, n - oc2)
+      oc1 = 0
+      oc2 = 0
+    End If
+    
+    If Mid(f, n, 10) = "<FmaPago>1" Then
+      b = "CAJA - " & b
+      MsgBox "Pago Contado" & Space(10), vbInformation, "JCV"
+    End If
+    
+  Next
+  
+  TextBox2.Text = Trim(Left(b, Len(b) - 1))
+  Label15.Caption = ""
+  Exit Sub
+
+End Sub
+
+
